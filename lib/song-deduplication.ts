@@ -46,7 +46,10 @@ function areSongsSimilar(key1: SongKey, key2: SongKey): boolean {
     const commonWords = name1Words.filter((w) => name2Words.includes(w))
 
     // If less than 80% of words match, consider them different songs
-    if (commonWords.length < Math.min(name1Words.length, name2Words.length) * 0.8) {
+    if (
+      commonWords.length <
+      Math.min(name1Words.length, name2Words.length) * 0.8
+    ) {
       return false
     }
   }
@@ -58,7 +61,9 @@ function areSongsSimilar(key1: SongKey, key2: SongKey): boolean {
   return true
 }
 
-export function deduplicateSongs(songs: Array<SpotifyTrack & { playlistNames: string[] }>): ProcessedSong[] {
+export function deduplicateSongs(
+  songs: Array<SpotifyTrack & { playlistNames: string[] }>,
+): ProcessedSong[] {
   const songMap = new Map<string, ProcessedSong>()
 
   songs.forEach((song) => {

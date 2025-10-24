@@ -150,16 +150,28 @@ function generateAlbumName(): string {
 }
 
 function generateRandomDate(start: Date, end: Date): string {
-  const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
+  const date = new Date(
+    start.getTime() + Math.random() * (end.getTime() - start.getTime()),
+  )
   return date.toISOString()
 }
 
-function generateTrack(artistName: string, albumName: string, albumId: string): SpotifyTrack {
+function generateTrack(
+  artistName: string,
+  albumName: string,
+  albumId: string,
+): SpotifyTrack {
   const trackId = `track_${Math.random().toString(36).substr(2, 9)}`
   const artistId = `artist_${Math.random().toString(36).substr(2, 9)}`
 
   // Add some variation - sometimes add a second artist
-  const artists = [{ id: artistId, name: artistName, href: `https://api.spotify.com/v1/artists/${artistId}` }]
+  const artists = [
+    {
+      id: artistId,
+      name: artistName,
+      href: `https://api.spotify.com/v1/artists/${artistId}`,
+    },
+  ]
   if (Math.random() > 0.7) {
     const secondArtist = randomItem(artistNames.filter((a) => a !== artistName))
     artists.push({
@@ -182,7 +194,11 @@ function generateTrack(artistName: string, albumName: string, albumId: string): 
         name: albumName,
         album_type: Math.random() > 0.7 ? "single" : "album",
         total_tracks: Math.floor(Math.random() * 15) + 5,
-        release_date: new Date(2015 + Math.floor(Math.random() * 10), Math.floor(Math.random() * 12), 1)
+        release_date: new Date(
+          2015 + Math.floor(Math.random() * 10),
+          Math.floor(Math.random() * 12),
+          1,
+        )
           .toISOString()
           .split("T")[0],
         images: [
@@ -202,7 +218,10 @@ function generateTrack(artistName: string, albumName: string, albumId: string): 
 
 export function generateMockData(): MockData {
   const likedSongs: SpotifyTrack[] = []
-  const playlists: Array<{ playlist: SpotifyPlaylist; tracks: SpotifyTrack[] }> = []
+  const playlists: Array<{
+    playlist: SpotifyPlaylist
+    tracks: SpotifyTrack[]
+  }> = []
 
   // Generate liked songs (around 10000)
   const targetLikedSongs = 10000
@@ -307,7 +326,10 @@ export async function fetchAllSongs(
 
   // Calculate total items to fetch
   const totalLikedPages = Math.ceil(mockData.likedSongs.length / 50)
-  const totalPlaylistPages = mockData.playlists.reduce((sum, p) => sum + Math.ceil(p.tracks.length / 50), 0)
+  const totalPlaylistPages = mockData.playlists.reduce(
+    (sum, p) => sum + Math.ceil(p.tracks.length / 50),
+    0,
+  )
   const totalPages = totalLikedPages + totalPlaylistPages
 
   let currentPage = 0

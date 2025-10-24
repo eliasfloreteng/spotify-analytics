@@ -9,7 +9,8 @@ interface LoadingIndicatorProps {
 
 export default function LoadingIndicator({ progress }: LoadingIndicatorProps) {
   const icons = [Music2, Disc, Radio]
-  const currentIcon = icons[Math.floor((progress / 100) * icons.length)] || Music2
+  const currentIcon =
+    icons[Math.floor((progress / 100) * icons.length)] || Music2
   const Icon = currentIcon
 
   return (
@@ -28,7 +29,9 @@ export default function LoadingIndicator({ progress }: LoadingIndicatorProps) {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">{"Fetching your music library..."}</span>
+                <span className="font-medium">
+                  {"Fetching your music library..."}
+                </span>
                 <span className="text-muted-foreground">{`${Math.round(progress)}%`}</span>
               </div>
 

@@ -1,15 +1,29 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import type { ProcessedSong } from "@/lib/song-deduplication"
 
 interface AddedOverTimeHeatmapProps {
   songs: ProcessedSong[]
 }
 
-export default function AddedOverTimeHeatmap({ songs }: AddedOverTimeHeatmapProps) {
+export default function AddedOverTimeHeatmap({
+  songs,
+}: AddedOverTimeHeatmapProps) {
   const [selectedYear, setSelectedYear] = useState<string>("all")
 
   const { years, heatmapData } = useMemo(() => {
@@ -44,7 +58,8 @@ export default function AddedOverTimeHeatmap({ songs }: AddedOverTimeHeatmapProp
     return { years: sortedYears, heatmapData: dataByYear }
   }, [songs])
 
-  const displayYear = selectedYear === "all" ? years[0] : Number.parseInt(selectedYear)
+  const displayYear =
+    selectedYear === "all" ? years[0] : Number.parseInt(selectedYear)
   const yearData = heatmapData.get(displayYear)
 
   const maxCount = useMemo(() => {
@@ -61,10 +76,29 @@ export default function AddedOverTimeHeatmap({ songs }: AddedOverTimeHeatmapProp
   const getIntensity = (count: number) => {
     if (count === 0) return "bg-muted"
     const intensity = Math.min(Math.ceil((count / maxCount) * 4), 4)
-    return ["bg-chart-1/20", "bg-chart-1/40", "bg-chart-1/60", "bg-chart-1/80", "bg-chart-1"][intensity]
+    return [
+      "bg-chart-1/20",
+      "bg-chart-1/40",
+      "bg-chart-1/60",
+      "bg-chart-1/80",
+      "bg-chart-1",
+    ][intensity]
   }
 
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ]
 
   return (
     <div className="space-y-4">
@@ -92,20 +126,33 @@ export default function AddedOverTimeHeatmap({ songs }: AddedOverTimeHeatmapProp
         </CardHeader>
         <CardContent>
           {!yearData ? (
-            <p className="text-center text-muted-foreground">{"No data available for selected year"}</p>
+            <p className="text-center text-muted-foreground">
+              {"No data available for selected year"}
+            </p>
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-12 gap-2">
                 {monthNames.map((month, monthIndex) => (
                   <div key={month} className="space-y-2">
-                    <p className="text-center text-xs font-medium text-muted-foreground">{month}</p>
+                    <p className="text-center text-xs font-medium text-muted-foreground">
+                      {month}
+                    </p>
                     <div className="grid grid-cols-1 gap-1">
                       {Array.from({ length: 31 }, (_, dayIndex) => {
                         const day = dayIndex + 1
-                        const daysInMonth = new Date(displayYear, monthIndex + 1, 0).getDate()
+                        const daysInMonth = new Date(
+                          displayYear,
+                          monthIndex + 1,
+                          0,
+                        ).getDate()
 
                         if (day > daysInMonth) {
-                          return <div key={day} className="h-3 w-3 rounded-sm bg-transparent" />
+                          return (
+                            <div
+                              key={day}
+                              className="h-3 w-3 rounded-sm bg-transparent"
+                            />
+                          )
                         }
 
                         const count = yearData.get(monthIndex)?.get(day) || 0
@@ -133,7 +180,12 @@ export default function AddedOverTimeHeatmap({ songs }: AddedOverTimeHeatmapProp
                       className={`h-3 w-3 rounded-sm ${
                         level === 0
                           ? "bg-muted"
-                          : ["bg-chart-1/20", "bg-chart-1/40", "bg-chart-1/60", "bg-chart-1"][level - 1]
+                          : [
+                              "bg-chart-1/20",
+                              "bg-chart-1/40",
+                              "bg-chart-1/60",
+                              "bg-chart-1",
+                            ][level - 1]
                       }`}
                     />
                   ))}

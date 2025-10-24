@@ -1,7 +1,13 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Search } from "lucide-react"
@@ -11,7 +17,9 @@ interface MostPlaylistedSongsProps {
   songs: ProcessedSong[]
 }
 
-export default function MostPlaylistedSongs({ songs }: MostPlaylistedSongsProps) {
+export default function MostPlaylistedSongs({
+  songs,
+}: MostPlaylistedSongsProps) {
   const [searchQuery, setSearchQuery] = useState("")
 
   const songPlaylistCounts = useMemo(() => {
@@ -36,8 +44,12 @@ export default function MostPlaylistedSongs({ songs }: MostPlaylistedSongsProps)
     if (!searchQuery) return songPlaylistCounts
     return songPlaylistCounts.filter(
       (item) =>
-        item.song.track.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.song.track.artists.some((artist) => artist.name.toLowerCase().includes(searchQuery.toLowerCase())),
+        item.song.track.name
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        item.song.track.artists.some((artist) =>
+          artist.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        ),
     )
   }, [songPlaylistCounts, searchQuery])
 
@@ -60,7 +72,9 @@ export default function MostPlaylistedSongs({ songs }: MostPlaylistedSongsProps)
           </div>
 
           {filteredSongs.length === 0 ? (
-            <p className="text-center text-muted-foreground">{"No songs appear in multiple playlists"}</p>
+            <p className="text-center text-muted-foreground">
+              {"No songs appear in multiple playlists"}
+            </p>
           ) : (
             <div className="space-y-3">
               {filteredSongs.slice(0, 100).map((item, index) => (
@@ -70,16 +84,26 @@ export default function MostPlaylistedSongs({ songs }: MostPlaylistedSongsProps)
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex gap-4">
-                      <span className="text-2xl font-bold text-muted-foreground">{index + 1}</span>
+                      <span className="text-2xl font-bold text-muted-foreground">
+                        {index + 1}
+                      </span>
                       <div className="flex-1">
                         <p className="font-semibold">{item.song.track.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {item.song.track.artists.map((a) => a.name).join(", ")}
+                          {item.song.track.artists
+                            .map((a) => a.name)
+                            .join(", ")}
                         </p>
-                        <p className="text-xs text-muted-foreground">{item.song.track.album.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.song.track.album.name}
+                        </p>
                         <div className="mt-2 flex flex-wrap gap-1">
                           {item.song.playlistNames.map((playlist, idx) => (
-                            <Badge key={idx} variant="secondary" className="text-xs">
+                            <Badge
+                              key={idx}
+                              variant="secondary"
+                              className="text-xs"
+                            >
                               {playlist}
                             </Badge>
                           ))}

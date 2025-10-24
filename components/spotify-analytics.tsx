@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { RefreshCw, Music, Disc3, ListMusic, Calendar } from "lucide-react"
 import { generateMockData, fetchAllSongs } from "@/lib/mock-spotify-data"
 import { deduplicateSongs, type ProcessedSong } from "@/lib/song-deduplication"
@@ -73,7 +79,9 @@ export default function SpotifyAnalytics() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>{"No Data Available"}</CardTitle>
-            <CardDescription>{"Fetch your Spotify data to get started"}</CardDescription>
+            <CardDescription>
+              {"Fetch your Spotify data to get started"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Button onClick={handleFetchSongs} className="w-full">
@@ -91,7 +99,9 @@ export default function SpotifyAnalytics() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-balance text-4xl font-bold tracking-tight">{"Spotify Analytics"}</h1>
+            <h1 className="text-balance text-4xl font-bold tracking-tight">
+              {"Spotify Analytics"}
+            </h1>
             <p className="mt-2 text-muted-foreground">
               {`${songs.length.toLocaleString()} songs analyzed`}
               {lastFetched && (

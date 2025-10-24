@@ -1,7 +1,13 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
@@ -43,7 +49,9 @@ export default function TopArtists({ songs }: TopArtistsProps) {
 
   const filteredArtists = useMemo(() => {
     if (!searchQuery) return artistStats
-    return artistStats.filter((artist) => artist.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    return artistStats.filter((artist) =>
+      artist.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
   }, [artistStats, searchQuery])
 
   return (
@@ -71,7 +79,9 @@ export default function TopArtists({ songs }: TopArtistsProps) {
                 className="group flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-2xl font-bold text-muted-foreground">{index + 1}</span>
+                  <span className="text-2xl font-bold text-muted-foreground">
+                    {index + 1}
+                  </span>
                   <div>
                     <p className="font-semibold">{artist.name}</p>
                     <p className="text-sm text-muted-foreground">
@@ -94,12 +104,19 @@ export default function TopArtists({ songs }: TopArtistsProps) {
                     <ScrollArea className="max-h-[60vh]">
                       <div className="space-y-2 pr-4">
                         {artist.songs.map((song, idx) => (
-                          <div key={`${song.track.id}-${idx}`} className="rounded-lg border bg-card p-3">
+                          <div
+                            key={`${song.track.id}-${idx}`}
+                            className="rounded-lg border bg-card p-3"
+                          >
                             <p className="font-medium">{song.track.name}</p>
-                            <p className="text-sm text-muted-foreground">{song.track.album.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {song.track.album.name}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {`${Math.floor(song.track.duration_ms / 60000)}:${String(
-                                Math.floor((song.track.duration_ms % 60000) / 1000),
+                                Math.floor(
+                                  (song.track.duration_ms % 60000) / 1000,
+                                ),
                               ).padStart(2, "0")}`}
                             </p>
                           </div>
