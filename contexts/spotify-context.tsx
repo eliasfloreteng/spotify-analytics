@@ -1,6 +1,10 @@
 "use client"
 
-import { FetchAllDataResult, FetchProgress } from "@/lib/spotify-data-fetcher"
+import {
+  FetchAllDataResult,
+  fetchAllSpotifyData,
+  FetchProgress,
+} from "@/lib/spotify-data-fetcher"
 import {
   AuthorizationCodeWithPKCEStrategy,
   SdkOptions,
@@ -30,6 +34,8 @@ const DEFAULT_SCOPES = [
 interface SpotifyContextValue {
   sdk: SpotifyApi | null
   isInitialized: boolean
+  loadingProgress?: FetchProgress
+  dataResult?: FetchAllDataResult
 }
 
 const SpotifyContext = createContext<SpotifyContextValue | undefined>(undefined)
@@ -49,6 +55,8 @@ export function SpotifyProvider({
   scopes,
   config,
 }: SpotifyProviderProps) {
+  const [loadingProgress, setLoadingProgress] = useState<FetchProgress>()
+  const [dataResult, setDataResult] = useState<FetchAllDataResult>()
   const [sdk, setSdk] = useState<SpotifyApi | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   const { current: activeScopes } = useRef(scopes || DEFAULT_SCOPES)
@@ -69,6 +77,12 @@ export function SpotifyProvider({
 
         if (authenticated) {
           setSdk(() => internalSdk)
+
+          const result = await fetchAllSpotifyData(
+            internalSdk,
+            setLoadingProgress,
+          )
+          setDataResult(result)
         }
       } catch (e: Error | unknown) {
         const error = e as Error
@@ -91,7 +105,9 @@ export function SpotifyProvider({
   }, [clientId, redirectUrl, config, activeScopes])
 
   return (
-    <SpotifyContext.Provider value={{ sdk, isInitialized }}>
+    <SpotifyContext.Provider
+      value={{ sdk, isInitialized, dataResult, loadingProgress }}
+    >
       {children}
     </SpotifyContext.Provider>
   )
@@ -102,9 +118,7 @@ export function useSpotify() {
   if (context === undefined) {
     throw new Error("useSpotify must be used within a SpotifyProvider")
   }
-  const sdk = context.sdk
-
   return {
-    sdk,
+    ...context,
   }
 }

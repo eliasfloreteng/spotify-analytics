@@ -30,127 +30,90 @@ import AddedOverTimeHeatmap from "@/components/added-over-time-heatmap"
 import { useSpotify } from "@/contexts/spotify-context"
 
 export default function SpotifyAnalytics() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [songs, setSongs] = useState<ProcessedSong[]>([])
+  // const [isLoading, setIsLoading] = useState(false)
+  // const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  // const [isAuthenticated, setIsAuthenticated] = useState(false)
+  // const [progress, setProgress] = useState(0)
+  // const [songs, setSongs] = useState<ProcessedSong[]>([])
   const [lastFetched, setLastFetched] = useState<Date | null>(null)
 
-  const { sdk: spotify } = useSpotify()
-
-  const checkAuthentication = async () => {
-    const token = await spotify?.getAccessToken()
-    return !!token?.access_token
-  }
-
-  const authenticateSpotify = async () => {
-    await spotify?.authenticate()
-  }
-
-  const logoutSpotify = () => {
-    spotify?.logOut()
-    // Clear any cached data
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("spotify-songs")
-      localStorage.removeItem("spotify-fetch-date")
-    }
-  }
-
-  useEffect(() => {
-    // Check authentication status on mount
-    const checkAuth = async () => {
-      setIsCheckingAuth(true)
-      const authenticated = await checkAuthentication()
-      setIsAuthenticated(authenticated)
-      setIsCheckingAuth(false)
-
-      // Load cached data if available
-      const cached = localStorage.getItem("spotify-songs")
-      const cachedDate = localStorage.getItem("spotify-fetch-date")
-
-      if (cached && cachedDate) {
-        setSongs(JSON.parse(cached))
-        setLastFetched(new Date(cachedDate))
-      }
-    }
-
-    checkAuth()
-  }, [])
+  const { sdk: spotify, dataResult, loadingProgress } = useSpotify()
 
   if (!spotify) {
     console.log("Spotify SDK not initialized")
     return null
   }
 
-  const handleFetchSongs = async () => {
-    setIsLoading(true)
-    setProgress(0)
+  const songs = dataResult?.tracks || []
 
-    const profile = await spotify.currentUser.profile()
-    console.log("Fetching songs for user:", profile.display_name)
+  // const handleFetchSongs = async () => {
+  //   setIsLoading(true)
+  //   setProgress(0)
 
-    try {
-      // Generate mock data
-      const mockData = generateMockData()
+  //   const profile = await spotify.currentUser.profile()
+  //   console.log("Fetching songs for user:", profile.display_name)
 
-      // Simulate fetching with progress
-      const allSongs = await fetchAllSongs(mockData, (current, total) => {
-        setProgress((current / total) * 100)
-      })
+  //   try {
+  //     // Generate mock data
+  //     const mockData = generateMockData()
 
-      // Deduplicate songs
-      const deduplicated = deduplicateSongs(allSongs)
+  //     // Simulate fetching with progress
+  //     const allSongs = await fetchAllSongs(mockData, (current, total) => {
+  //       setProgress((current / total) * 100)
+  //     })
 
-      // Save to localStorage
-      localStorage.setItem("spotify-songs", JSON.stringify(deduplicated))
-      localStorage.setItem("spotify-fetch-date", new Date().toISOString())
+  //     // Deduplicate songs
+  //     const deduplicated = deduplicateSongs(allSongs)
 
-      setSongs(deduplicated)
-      setLastFetched(new Date())
-    } catch (error) {
-      console.error("Error fetching songs:", error)
-    } finally {
-      setIsLoading(false)
-      setProgress(0)
-    }
-  }
+  //     // Save to localStorage
+  //     localStorage.setItem("spotify-songs", JSON.stringify(deduplicated))
+  //     localStorage.setItem("spotify-fetch-date", new Date().toISOString())
 
-  const handleLogin = async () => {
-    try {
-      setIsCheckingAuth(true)
-      await authenticateSpotify()
-      setIsAuthenticated(true)
-    } catch (error) {
-      console.error("Error during Spotify authentication:", error)
-    } finally {
-      setIsCheckingAuth(false)
-    }
-  }
+  //     setSongs(deduplicated)
+  //     setLastFetched(new Date())
+  //   } catch (error) {
+  //     console.error("Error fetching songs:", error)
+  //   } finally {
+  //     setIsLoading(false)
+  //     setProgress(0)
+  //   }
+  // }
 
-  const handleLogout = () => {
-    logoutSpotify()
-    setIsAuthenticated(false)
-    setSongs([])
-    setLastFetched(null)
-  }
+  // const handleLogin = async () => {
+  //   try {
+  //     setIsCheckingAuth(true)
+  //     await authenticateSpotify()
+  //     setIsAuthenticated(true)
+  //   } catch (error) {
+  //     console.error("Error during Spotify authentication:", error)
+  //   } finally {
+  //     setIsCheckingAuth(false)
+  //   }
+  // }
 
-  if (isCheckingAuth) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="mt-4 text-sm text-muted-foreground">
-              {"Checking authentication..."}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  // const handleLogout = () => {
+  //   logoutSpotify()
+  //   setIsAuthenticated(false)
+  //   setSongs([])
+  //   setLastFetched(null)
+  // }
 
-  if (!isAuthenticated) {
+  // if (isCheckingAuth) {
+  //   return (
+  //     <div className="flex min-h-screen items-center justify-center bg-background">
+  //       <Card className="w-full max-w-md">
+  //         <CardContent className="flex flex-col items-center justify-center py-12">
+  //           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  //           <p className="mt-4 text-sm text-muted-foreground">
+  //             {"Checking authentication..."}
+  //           </p>
+  //         </CardContent>
+  //       </Card>
+  //     </div>
+  //   )
+  // }
+
+  if (!spotify) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Card className="w-full max-w-md">
@@ -166,7 +129,7 @@ export default function SpotifyAnalytics() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button onClick={handleLogin} className="w-full" size="lg">
+            <Button onClick={() => {}} className="w-full" size="lg">
               <LogIn className="mr-2 h-5 w-5" />
               {"Sign in with Spotify"}
             </Button>
@@ -181,8 +144,8 @@ export default function SpotifyAnalytics() {
     )
   }
 
-  if (isLoading) {
-    return <LoadingIndicator progress={progress} />
+  if (!dataResult || loadingProgress?.phase !== "complete") {
+    return <LoadingIndicator progress={loadingProgress?.percentage ?? 0} />
   }
 
   if (songs.length === 0) {
@@ -196,7 +159,7 @@ export default function SpotifyAnalytics() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button onClick={handleFetchSongs} className="w-full" size="lg">
+            {/* <Button onClick={handleFetchSongs} className="w-full" size="lg">
               <Music className="mr-2 h-5 w-5" />
               {"Fetch My Music"}
             </Button>
@@ -208,7 +171,7 @@ export default function SpotifyAnalytics() {
             >
               <LogOut className="mr-2 h-4 w-4" />
               {"Sign Out"}
-            </Button>
+            </Button> */}
           </CardContent>
         </Card>
       </div>
@@ -231,14 +194,14 @@ export default function SpotifyAnalytics() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={handleFetchSongs} variant="outline">
+            {/* <Button onClick={handleFetchSongs} variant="outline">
               <RefreshCw className="mr-2 h-4 w-4" />
               {"Refresh Data"}
             </Button>
             <Button onClick={handleLogout} variant="outline">
               <LogOut className="mr-2 h-4 w-4" />
               {"Sign Out"}
-            </Button>
+            </Button> */}
           </div>
         </div>
 
