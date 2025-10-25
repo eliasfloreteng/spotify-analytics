@@ -27,7 +27,7 @@ import TopArtists from "@/components/top-artists"
 import TopAlbums from "@/components/top-albums"
 import MostPlaylistedSongs from "@/components/most-playlisted-songs"
 import AddedOverTimeHeatmap from "@/components/added-over-time-heatmap"
-import { useSpotify } from "@/hooks/use-spotify"
+import { useSpotify } from "@/contexts/spotify-context"
 
 export default function SpotifyAnalytics() {
   const [isLoading, setIsLoading] = useState(false)
@@ -37,7 +37,7 @@ export default function SpotifyAnalytics() {
   const [songs, setSongs] = useState<ProcessedSong[]>([])
   const [lastFetched, setLastFetched] = useState<Date | null>(null)
 
-  const spotify = useSpotify()
+  const { sdk: spotify } = useSpotify()
 
   const checkAuthentication = async () => {
     const token = await spotify?.getAccessToken()

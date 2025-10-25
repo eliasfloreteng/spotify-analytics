@@ -1,9 +1,18 @@
+"use client"
+
 import {
   AuthorizationCodeWithPKCEStrategy,
   SdkOptions,
   SpotifyApi,
 } from "@spotify/web-api-ts-sdk"
-import { useEffect, useRef, useState } from "react"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react"
 
 if (!process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID) {
   throw new Error("Missing NEXT_PUBLIC_SPOTIFY_CLIENT_ID environment variable")
@@ -17,18 +26,30 @@ const DEFAULT_SCOPES = [
   "user-read-email",
 ]
 
-export function useSpotify({
-  clientId,
-  redirectUrl,
-  scopes,
-  config,
-}: {
+interface SpotifyContextValue {
+  sdk: SpotifyApi | null
+  isInitialized: boolean
+}
+
+const SpotifyContext = createContext<SpotifyContextValue | undefined>(undefined)
+
+interface SpotifyProviderProps {
+  children: ReactNode
   clientId?: string
   redirectUrl?: string
   scopes?: string[]
   config?: SdkOptions
-} = {}) {
+}
+
+export function SpotifyProvider({
+  children,
+  clientId,
+  redirectUrl,
+  scopes,
+  config,
+}: SpotifyProviderProps) {
   const [sdk, setSdk] = useState<SpotifyApi | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
   const { current: activeScopes } = useRef(scopes || DEFAULT_SCOPES)
 
   useEffect(() => {
@@ -62,9 +83,25 @@ export function useSpotify({
         } else {
           console.error(e)
         }
+      } finally {
+        setIsInitialized(true)
       }
     })()
   }, [clientId, redirectUrl, config, activeScopes])
 
-  return sdk
+  return (
+    <SpotifyContext.Provider value={{ sdk, isInitialized }}>
+      {children}
+    </SpotifyContext.Provider>
+  )
+}
+
+export function useSpotify() {
+  const context = useContext(SpotifyContext)
+  if (context === undefined) {
+    throw new Error("useSpotify must be used within a SpotifyProvider")
+  }
+  return {
+    sdk: context.sdk,
+  }
 }
