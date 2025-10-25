@@ -223,8 +223,8 @@ export function generateMockData(): MockData {
     tracks: SpotifyTrack[]
   }> = []
 
-  // Generate liked songs (around 10000)
-  const targetLikedSongs = 10000
+  // Generate liked songs (around 1000)
+  const targetLikedSongs = 1000
   const artistAlbums = new Map<string, string[]>()
 
   // Pre-generate albums for each artist
