@@ -1,9 +1,8 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Montserrat } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import { SpotifyProvider } from "@/contexts/spotify-context"
 import "./globals.css"
+import Providers from "@/components/providers"
 
 const montserrat = Montserrat({ subsets: ["latin"] })
 
@@ -21,8 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased ${montserrat.className}`}>
-        <SpotifyProvider>{children}</SpotifyProvider>
-        <Analytics />
+        <Providers>{children}</Providers>
       </body>
     </html>
   )
