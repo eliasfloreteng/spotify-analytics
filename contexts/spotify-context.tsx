@@ -1,5 +1,6 @@
 "use client"
 
+import { FetchAllDataResult, FetchProgress } from "@/lib/spotify-data-fetcher"
 import {
   AuthorizationCodeWithPKCEStrategy,
   SdkOptions,
@@ -101,7 +102,9 @@ export function useSpotify() {
   if (context === undefined) {
     throw new Error("useSpotify must be used within a SpotifyProvider")
   }
+  const sdk = context.sdk
+
   return {
-    sdk: context.sdk,
+    sdk,
   }
 }
