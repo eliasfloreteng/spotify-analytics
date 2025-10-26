@@ -96,6 +96,13 @@ export default function TopAlbums({ trackGroups }: TopAlbumsProps) {
                   <span className="text-2xl font-bold text-muted-foreground">
                     {index + 1}
                   </span>
+                  {item.album.images?.[0]?.url && (
+                    <img
+                      src={item.album.images[0].url}
+                      alt={item.album.name}
+                      className="h-16 w-16 rounded object-cover"
+                    />
+                  )}
                   <div>
                     <p className="font-semibold">{item.album.name}</p>
                     <p className="text-sm text-muted-foreground">

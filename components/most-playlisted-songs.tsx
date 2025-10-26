@@ -97,6 +97,13 @@ export default function MostPlaylistedSongs({
                       <span className="text-lg font-bold text-muted-foreground">
                         {index + 1}
                       </span>
+                      {item.track.album.images?.[0]?.url && (
+                        <img
+                          src={item.track.album.images[0].url}
+                          alt={item.track.album.name}
+                          className="h-12 w-12 rounded object-cover"
+                        />
+                      )}
                       <div>
                         <p className="font-semibold leading-none">
                           {item.track.name}
