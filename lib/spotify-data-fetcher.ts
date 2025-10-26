@@ -13,6 +13,7 @@ import {
   fetchPlaylistTracks,
   fetchUser,
 } from "./spotify"
+import { toast } from "sonner"
 
 // Discriminated union for track sources
 export type CombinedTrack =
@@ -63,6 +64,61 @@ export interface FetchAllDataResult {
 }
 
 /**
+ * Retry a function with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries = 5,
+  initialDelay = 1000,
+): Promise<T> {
+  let lastError: any
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (error: any) {
+      lastError = error
+
+      // Check if it's a rate limit error (429)
+      const isRateLimit =
+        error?.status === 429 ||
+        error?.response?.status === 429 ||
+        error?.message?.includes("429") ||
+        error?.message?.toLowerCase().includes("rate limit")
+
+      if (isRateLimit && attempt < maxRetries) {
+        // Get retry-after header if available, otherwise use exponential backoff
+        const retryAfter = error?.response?.headers?.["retry-after"]
+        const delay = retryAfter
+          ? parseInt(retryAfter) * 1000
+          : initialDelay * Math.pow(2, attempt)
+
+        toast.warning(
+          `Rate limit hit, retrying in ${Math.round(delay / 1000)}s (attempt ${attempt + 1}/${maxRetries})`,
+        )
+        await new Promise((resolve) => setTimeout(resolve, delay))
+        continue
+      }
+
+      // For other errors, retry with exponential backoff
+      if (attempt < maxRetries) {
+        const delay = initialDelay * Math.pow(2, attempt)
+        toast.error(
+          `Request failed, retrying in ${Math.round(delay / 1000)}s (attempt ${attempt + 1}/${maxRetries})`,
+        )
+        await new Promise((resolve) => setTimeout(resolve, delay))
+        continue
+      }
+
+      // Max retries reached
+      throw lastError
+    }
+  }
+
+  throw lastError
+}
+
+/**
  * Fetches all Spotify data (liked songs, playlists, and tracks) with concurrency control
  * @param sdk - Spotify SDK instance
  * @param onProgress - Optional callback for progress updates
@@ -72,7 +128,7 @@ export async function fetchAllSpotifyData(
   sdk: SpotifyApi,
   onProgress?: ProgressCallback,
 ): Promise<FetchAllDataResult> {
-  const queue = new PQueue({ concurrency: 5 })
+  const queue = new PQueue({ concurrency: 3 })
   const errors: FetchError[] = []
   const tracks: CombinedTrack[] = []
 
@@ -101,7 +157,7 @@ export async function fetchAllSpotifyData(
   // Step 1: Fetch user profile
   try {
     reportProgress("user", 0, 1, "Fetching user profile...")
-    user = await fetchUser(sdk)
+    user = await retryWithBackoff(() => fetchUser(sdk))
     reportProgress("user", 1, 1, "User profile fetched")
   } catch (error) {
     errors.push({ type: "user", error })
@@ -113,7 +169,9 @@ export async function fetchAllSpotifyData(
     reportProgress("liked-songs", 0, 1, "Fetching liked songs...")
 
     // Get first page to determine total
-    const firstPage = await fetchSpotifyLikedSongs(sdk, 0)
+    const firstPage = await retryWithBackoff(() =>
+      fetchSpotifyLikedSongs(sdk, 0),
+    )
     totalLikedSongs = firstPage.total
 
     // Add first page tracks
@@ -144,7 +202,9 @@ export async function fetchAllSpotifyData(
       likedSongsPromises.push(
         queue.add(async () => {
           try {
-            const pageData = await fetchSpotifyLikedSongs(sdk, offset)
+            const pageData = await retryWithBackoff(() =>
+              fetchSpotifyLikedSongs(sdk, offset),
+            )
             pageData.items.forEach((item) => {
               tracks.push({
                 source: "liked",
@@ -180,7 +240,7 @@ export async function fetchAllSpotifyData(
     reportProgress("playlists", 0, 1, "Fetching playlists...")
 
     // Get first page to determine total
-    const firstPage = await fetchPlaylists(sdk, 0)
+    const firstPage = await retryWithBackoff(() => fetchPlaylists(sdk, 0))
     const totalPlaylistsCount = firstPage.total
 
     // Filter user-created playlists from first page
@@ -211,7 +271,9 @@ export async function fetchAllSpotifyData(
       playlistPromises.push(
         queue.add(async () => {
           try {
-            const pageData = await fetchPlaylists(sdk, offset)
+            const pageData = await retryWithBackoff(() =>
+              fetchPlaylists(sdk, offset),
+            )
             if (user) {
               pageData.items.forEach((playlist) => {
                 if (playlist.owner.id === user.id) {
@@ -263,7 +325,9 @@ export async function fetchAllSpotifyData(
         queue.add(async () => {
           try {
             // Get first page to determine total tracks in this playlist
-            const firstPage = await fetchPlaylistTracks(sdk, playlist.id, 0)
+            const firstPage = await retryWithBackoff(() =>
+              fetchPlaylistTracks(sdk, playlist.id, 0),
+            )
             const playlistTotal = firstPage.total
 
             // Add first page tracks
@@ -284,10 +348,8 @@ export async function fetchAllSpotifyData(
             for (let page = 1; page < totalPages; page++) {
               const offset = page * limit
               try {
-                const pageData = await fetchPlaylistTracks(
-                  sdk,
-                  playlist.id,
-                  offset,
+                const pageData = await retryWithBackoff(() =>
+                  fetchPlaylistTracks(sdk, playlist.id, offset),
                 )
                 pageData.items.forEach((item) => {
                   tracks.push({
