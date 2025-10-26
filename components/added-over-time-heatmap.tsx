@@ -18,6 +18,7 @@ import {
   CartesianGrid,
 } from "recharts"
 import type { TrackGroup } from "@/lib/song-deduplication"
+import WeeklyActivityGraph from "@/components/weekly-activity-graph"
 
 interface AddedOverTimeHeatmapProps {
   trackGroups: TrackGroup[]
@@ -202,6 +203,8 @@ export default function AddedOverTimeHeatmap({
           </CardContent>
         </Card>
       </div>
+
+      <WeeklyActivityGraph trackGroups={trackGroups} />
 
       <Card>
         <CardHeader>
