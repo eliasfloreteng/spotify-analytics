@@ -7,6 +7,12 @@ import {
 } from "@/lib/spotify-data-fetcher"
 import { groupSimilarTracks, TrackGroup } from "@/lib/song-deduplication"
 import {
+  loadFromIndexedDB,
+  saveToIndexedDB,
+  clearIndexedDB as clearPersistedData,
+  formatCacheAge,
+} from "@/lib/indexed-db-persistence"
+import {
   AuthorizationCodeWithPKCEStrategy,
   SdkOptions,
   SpotifyApi,
@@ -42,6 +48,10 @@ interface SpotifyContextValue {
   fetchData: () => Promise<void>
   authenticate: () => Promise<void>
   isAuthenticated: boolean
+  clearCache: () => void
+  lastFetchDate: Date | null
+  cacheAge: string | null
+  isCacheStale: boolean
 }
 
 const SpotifyContext = createContext<SpotifyContextValue | undefined>(undefined)
@@ -67,6 +77,9 @@ export function SpotifyProvider({
   const [sdk, setSdk] = useState<SpotifyApi | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [lastFetchDate, setLastFetchDate] = useState<Date | null>(null)
+  const [cacheAge, setCacheAge] = useState<string | null>(null)
+  const [isCacheStale, setIsCacheStale] = useState(false)
   const sdkRef = useRef<SpotifyApi | null>(null)
 
   const authenticate = async () => {
@@ -118,6 +131,15 @@ export function SpotifyProvider({
         )
         setTrackGroups(groups)
 
+        // Save to IndexedDB
+        const saved = await saveToIndexedDB(result, groups)
+        if (saved) {
+          const now = new Date()
+          setLastFetchDate(now)
+          setCacheAge(formatCacheAge(now.getTime()))
+          setIsCacheStale(false)
+        }
+
         // Report completion
         setLoadingProgress({
           phase: "complete",
@@ -143,6 +165,15 @@ export function SpotifyProvider({
     }
   }
 
+  const clearCache = () => {
+    clearPersistedData()
+    setDataResult(undefined)
+    setTrackGroups(undefined)
+    setLastFetchDate(null)
+    setCacheAge(null)
+    setIsCacheStale(false)
+  }
+
   useEffect(() => {
     const auth = new AuthorizationCodeWithPKCEStrategy(
       clientId || process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID!,
@@ -153,7 +184,31 @@ export function SpotifyProvider({
     )
     const internalSdk = new SpotifyApi(auth, config)
     sdkRef.current = internalSdk
-    setIsInitialized(true)
+
+    // Load cached data on initialization
+    const loadCachedData = async () => {
+      const cached = await loadFromIndexedDB()
+
+      // Use setTimeout to avoid cascading renders
+      setTimeout(() => {
+        setIsInitialized(true)
+
+        if (cached) {
+          console.log("Loading cached data...")
+          setDataResult(cached.dataResult)
+          setTrackGroups(cached.trackGroups)
+          setLastFetchDate(new Date(cached.timestamp))
+          setCacheAge(formatCacheAge(cached.timestamp))
+
+          // Check if cache is older than 30 days
+          const ageInDays =
+            (Date.now() - cached.timestamp) / (1000 * 60 * 60 * 24)
+          setIsCacheStale(ageInDays > 30)
+        }
+      }, 0)
+    }
+
+    loadCachedData()
   }, [clientId, redirectUrl, config, scopes])
 
   return (
@@ -168,6 +223,10 @@ export function SpotifyProvider({
         fetchData,
         authenticate,
         isAuthenticated,
+        clearCache,
+        lastFetchDate,
+        cacheAge,
+        isCacheStale,
       }}
     >
       {children}

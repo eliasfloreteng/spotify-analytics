@@ -27,15 +27,10 @@ import TopAlbums from "@/components/top-albums"
 import MostPlaylistedSongs from "@/components/most-playlisted-songs"
 import AddedOverTimeHeatmap from "@/components/added-over-time-heatmap"
 import { useSpotify } from "@/contexts/spotify-context"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 export default function SpotifyAnalytics() {
-  // const [isLoading, setIsLoading] = useState(false)
-  // const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-  // const [isAuthenticated, setIsAuthenticated] = useState(false)
-  // const [progress, setProgress] = useState(0)
-  // const [songs, setSongs] = useState<ProcessedSong[]>([])
-  const [lastFetched, setLastFetched] = useState<Date | null>(null)
-
   const {
     sdk: spotify,
     dataResult,
@@ -45,6 +40,10 @@ export default function SpotifyAnalytics() {
     authenticate,
     isAuthenticated,
     isInitialized,
+    clearCache,
+    lastFetchDate,
+    cacheAge,
+    isCacheStale,
   } = useSpotify()
 
   const songs = dataResult?.tracks || []
@@ -52,6 +51,16 @@ export default function SpotifyAnalytics() {
 
   const handleFetchData = async () => {
     await fetchData()
+  }
+
+  const handleClearCache = () => {
+    if (
+      confirm(
+        "Are you sure you want to clear all cached data? You'll need to fetch your data again.",
+      )
+    ) {
+      clearCache()
+    }
   }
 
   // const handleFetchSongs = async () => {
@@ -209,6 +218,9 @@ export default function SpotifyAnalytics() {
     )
   }
 
+  // Show stale data warning if cache is older than 30 days
+  const showStaleWarning = isCacheStale && lastFetchDate
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -219,22 +231,33 @@ export default function SpotifyAnalytics() {
             </h1>
             <p className="mt-2 text-muted-foreground">
               {`${groups.length.toLocaleString()} unique songs • ${songs.length.toLocaleString()} total tracks`}
-              {lastFetched && (
-                <span className="ml-2 text-sm">{`• Last updated ${lastFetched.toLocaleDateString()}`}</span>
+              {cacheAge && (
+                <span className="ml-2 text-sm">{`• Last updated ${cacheAge}`}</span>
               )}
             </p>
           </div>
           <div className="flex gap-2">
-            {/* <Button onClick={handleFetchSongs} variant="outline">
+            <Button onClick={handleFetchData} variant="outline">
               <RefreshCw className="mr-2 h-4 w-4" />
               {"Refresh Data"}
             </Button>
-            <Button onClick={handleLogout} variant="outline">
+            <Button onClick={handleClearCache} variant="outline">
               <LogOut className="mr-2 h-4 w-4" />
-              {"Sign Out"}
-            </Button> */}
+              {"Clear Cache"}
+            </Button>
           </div>
         </div>
+
+        {showStaleWarning && (
+          <Alert className="mb-6 border-yellow-500/50 bg-yellow-500/10">
+            <AlertCircle className="h-4 w-4 text-yellow-500" />
+            <AlertDescription className="text-sm">
+              {
+                "Your data is over 30 days old. Consider refreshing to see your latest music library."
+              }
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Tabs defaultValue="dashboard" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
