@@ -5,6 +5,7 @@ import {
   fetchAllSpotifyData,
   FetchProgress,
 } from "@/lib/spotify-data-fetcher"
+import { groupSimilarTracks, TrackGroup } from "@/lib/song-deduplication"
 import {
   AuthorizationCodeWithPKCEStrategy,
   SdkOptions,
@@ -36,6 +37,7 @@ interface SpotifyContextValue {
   isInitialized: boolean
   loadingProgress?: FetchProgress
   dataResult?: FetchAllDataResult
+  trackGroups?: TrackGroup[]
 }
 
 const SpotifyContext = createContext<SpotifyContextValue | undefined>(undefined)
@@ -57,6 +59,7 @@ export function SpotifyProvider({
 }: SpotifyProviderProps) {
   const [loadingProgress, setLoadingProgress] = useState<FetchProgress>()
   const [dataResult, setDataResult] = useState<FetchAllDataResult>()
+  const [trackGroups, setTrackGroups] = useState<TrackGroup[]>()
   const [sdk, setSdk] = useState<SpotifyApi | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   const { current: activeScopes } = useRef(scopes || DEFAULT_SCOPES)
@@ -83,6 +86,10 @@ export function SpotifyProvider({
             setLoadingProgress,
           )
           setDataResult(result)
+
+          // Group similar tracks for deduplication
+          const groups = groupSimilarTracks(result.tracks)
+          setTrackGroups(groups)
         }
       } catch (e: Error | unknown) {
         const error = e as Error
@@ -106,7 +113,7 @@ export function SpotifyProvider({
 
   return (
     <SpotifyContext.Provider
-      value={{ sdk, isInitialized, dataResult, loadingProgress }}
+      value={{ sdk, isInitialized, dataResult, loadingProgress, trackGroups }}
     >
       {children}
     </SpotifyContext.Provider>

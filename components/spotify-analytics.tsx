@@ -20,13 +20,12 @@ import {
   LogOut,
   Loader2,
 } from "lucide-react"
-import { generateMockData, fetchAllSongs } from "@/lib/mock-spotify-data"
-import { deduplicateSongs, type ProcessedSong } from "@/lib/song-deduplication"
 import LoadingIndicator from "@/components/loading-indicator"
 import TopArtists from "@/components/top-artists"
 import TopAlbums from "@/components/top-albums"
 import MostPlaylistedSongs from "@/components/most-playlisted-songs"
 import AddedOverTimeHeatmap from "@/components/added-over-time-heatmap"
+import DeduplicationStats from "@/components/deduplication-stats"
 import { useSpotify } from "@/contexts/spotify-context"
 
 export default function SpotifyAnalytics() {
@@ -37,7 +36,12 @@ export default function SpotifyAnalytics() {
   // const [songs, setSongs] = useState<ProcessedSong[]>([])
   const [lastFetched, setLastFetched] = useState<Date | null>(null)
 
-  const { sdk: spotify, dataResult, loadingProgress } = useSpotify()
+  const {
+    sdk: spotify,
+    dataResult,
+    loadingProgress,
+    trackGroups,
+  } = useSpotify()
 
   if (!spotify) {
     console.log("Spotify SDK not initialized")
@@ -205,8 +209,12 @@ export default function SpotifyAnalytics() {
           </div>
         </div>
 
-        <Tabs defaultValue="artists" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <Tabs defaultValue="duplicates" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+            <TabsTrigger value="duplicates" className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline">{"Duplicates"}</span>
+            </TabsTrigger>
             <TabsTrigger value="artists" className="gap-2">
               <Music className="h-4 w-4" />
               <span className="hidden sm:inline">{"Top Artists"}</span>
@@ -224,6 +232,10 @@ export default function SpotifyAnalytics() {
               <span className="hidden sm:inline">{"Timeline"}</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="duplicates" className="space-y-4">
+            {trackGroups && <DeduplicationStats trackGroups={trackGroups} />}
+          </TabsContent>
 
           <TabsContent value="artists" className="space-y-4">
             <TopArtists songs={songs} />
