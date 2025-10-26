@@ -26,7 +26,7 @@ interface AddedOverTimeHeatmapProps {
 export default function AddedOverTimeHeatmap({
   trackGroups,
 }: AddedOverTimeHeatmapProps) {
-  const timelineData = useMemo(() => {
+  const { timelineData, yAxisMax } = useMemo(() => {
     const monthCounts = new Map<string, number>()
 
     // Use all tracks (not deduplicated) to show when songs were added
@@ -46,15 +46,28 @@ export default function AddedOverTimeHeatmap({
         date: new Date(month + "-01"),
       }))
       .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .map(({ month, count }) => ({
-        month: new Date(month + "-01").toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-        }),
-        count,
-      }))
 
-    return data
+    // Calculate median for Y-axis max
+    const counts = data.map((d) => d.count).sort((a, b) => a - b)
+    const median =
+      counts.length === 0
+        ? 0
+        : counts.length % 2 === 0
+          ? (counts[counts.length / 2 - 1] + counts[counts.length / 2]) / 2
+          : counts[Math.floor(counts.length / 2)]
+
+    const yAxisMax = median * 3.5
+
+    // Format data
+    const formattedData = data.map(({ month, count }) => ({
+      month: new Date(month + "-01").toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+      }),
+      count,
+    }))
+
+    return { timelineData: formattedData, yAxisMax }
   }, [trackGroups])
 
   const stats = useMemo(() => {
@@ -207,7 +220,11 @@ export default function AddedOverTimeHeatmap({
                   textAnchor="end"
                   height={80}
                 />
-                <YAxis className="text-xs" />
+                <YAxis
+                  className="text-xs"
+                  domain={[0, yAxisMax > 0 ? yAxisMax : "auto"]}
+                  allowDataOverflow={true}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "var(--card)",
