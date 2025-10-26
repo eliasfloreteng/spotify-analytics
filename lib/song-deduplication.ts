@@ -7,7 +7,11 @@ import { CombinedTrack } from "./spotify-data-fetcher"
 export interface TrackGroup {
   tracks: CombinedTrack[]
   representativeTrack: Track
-  matchReason: "strict" | "fuzzy" | "single"
+  matchReasons: {
+    hasStrictMatches: boolean
+    hasFuzzyMatches: boolean
+    isSingleTrack: boolean
+  }
 }
 
 /**
@@ -242,8 +246,9 @@ export function groupSimilarTracks(tracks: CombinedTrack[]): TrackGroup[] {
   // Initialize Union-Find structure
   const uf = new UnionFind(validTracks.length)
 
-  // Track which criterion was used for each group (for the first match found)
-  const matchReasons = new Map<number, "strict" | "fuzzy">()
+  // Track which criteria were used for each group
+  const groupStrictMatches = new Map<number, Set<string>>() // root -> set of "i-j" pairs
+  const groupFuzzyMatches = new Map<number, Set<string>>() // root -> set of "i-j" pairs
 
   // Compare all pairs of tracks
   for (let i = 0; i < validTracks.length; i++) {
@@ -254,23 +259,30 @@ export function groupSimilarTracks(tracks: CombinedTrack[]): TrackGroup[] {
       // Check if already in same group
       if (uf.find(i) === uf.find(j)) continue
 
+      const pairKey = `${i}-${j}`
+      let matched = false
+
       // Try strict match first
       if (matchesStrictCriteria(track1, track2)) {
         const root = uf.find(i)
-        if (!matchReasons.has(root)) {
-          matchReasons.set(root, "strict")
+        if (!groupStrictMatches.has(root)) {
+          groupStrictMatches.set(root, new Set())
         }
+        groupStrictMatches.get(root)!.add(pairKey)
         uf.union(i, j)
-        continue
+        matched = true
       }
 
-      // Try fuzzy match
+      // Try fuzzy match (even if strict matched, to track all match types)
       if (matchesFuzzyCriteria(track1, track2)) {
         const root = uf.find(i)
-        if (!matchReasons.has(root)) {
-          matchReasons.set(root, "fuzzy")
+        if (!groupFuzzyMatches.has(root)) {
+          groupFuzzyMatches.set(root, new Set())
         }
-        uf.union(i, j)
+        groupFuzzyMatches.get(root)!.add(pairKey)
+        if (!matched) {
+          uf.union(i, j)
+        }
       }
     }
   }
@@ -282,13 +294,21 @@ export function groupSimilarTracks(tracks: CombinedTrack[]): TrackGroup[] {
   const trackGroups: TrackGroup[] = indexGroups.map((indices) => {
     const groupTracks = indices.map((i) => validTracks[i])
     const root = uf.find(indices[0])
-    const matchReason =
-      groupTracks.length === 1 ? "single" : matchReasons.get(root) || "fuzzy"
+
+    const hasStrictMatches =
+      groupStrictMatches.has(root) && groupStrictMatches.get(root)!.size > 0
+    const hasFuzzyMatches =
+      groupFuzzyMatches.has(root) && groupFuzzyMatches.get(root)!.size > 0
+    const isSingleTrack = groupTracks.length === 1
 
     return {
       tracks: groupTracks,
       representativeTrack: getRepresentativeTrack(groupTracks),
-      matchReason,
+      matchReasons: {
+        hasStrictMatches,
+        hasFuzzyMatches,
+        isSingleTrack,
+      },
     }
   })
 
@@ -300,10 +320,21 @@ export function groupSimilarTracks(tracks: CombinedTrack[]): TrackGroup[] {
  */
 export function getGroupingStats(groups: TrackGroup[]) {
   const totalTracks = groups.reduce((sum, g) => sum + g.tracks.length, 0)
-  const singleTrackGroups = groups.filter((g) => g.tracks.length === 1).length
-  const multiTrackGroups = groups.filter((g) => g.tracks.length > 1).length
-  const strictGroups = groups.filter((g) => g.matchReason === "strict").length
-  const fuzzyGroups = groups.filter((g) => g.matchReason === "fuzzy").length
+  const singleTrackGroups = groups.filter(
+    (g) => g.matchReasons.isSingleTrack,
+  ).length
+  const multiTrackGroups = groups.filter(
+    (g) => !g.matchReasons.isSingleTrack,
+  ).length
+  const strictOnlyGroups = groups.filter(
+    (g) => g.matchReasons.hasStrictMatches && !g.matchReasons.hasFuzzyMatches,
+  ).length
+  const fuzzyOnlyGroups = groups.filter(
+    (g) => !g.matchReasons.hasStrictMatches && g.matchReasons.hasFuzzyMatches,
+  ).length
+  const mixedGroups = groups.filter(
+    (g) => g.matchReasons.hasStrictMatches && g.matchReasons.hasFuzzyMatches,
+  ).length
 
   const largestGroup = groups.reduce(
     (max, g) => (g.tracks.length > max ? g.tracks.length : max),
@@ -315,8 +346,9 @@ export function getGroupingStats(groups: TrackGroup[]) {
     totalTracks,
     singleTrackGroups,
     multiTrackGroups,
-    strictGroups,
-    fuzzyGroups,
+    strictOnlyGroups,
+    fuzzyOnlyGroups,
+    mixedGroups,
     largestGroup,
     averageGroupSize: totalTracks / groups.length,
   }
