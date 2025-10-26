@@ -280,38 +280,31 @@ export async function fetchAllSpotifyData(
             const limit = 50
             const totalPages = Math.ceil(playlistTotal / limit)
 
-            // Queue remaining pages for this playlist
-            const playlistPagePromises: Promise<void>[] = []
+            // Fetch remaining pages sequentially within this queue task
             for (let page = 1; page < totalPages; page++) {
               const offset = page * limit
-              playlistPagePromises.push(
-                queue.add(async () => {
-                  try {
-                    const pageData = await fetchPlaylistTracks(
-                      sdk,
-                      playlist.id,
-                      offset,
-                    )
-                    pageData.items.forEach((item) => {
-                      tracks.push({
-                        ...item,
-                        source: "playlist",
-                        playlist: playlist,
-                      })
-                      fetchedPlaylistTracksCount++
-                    })
-                  } catch (error) {
-                    errors.push({
-                      type: "playlist-tracks",
-                      error,
-                      context: { playlistId: playlist.id, offset },
-                    })
-                  }
-                }),
-              )
+              try {
+                const pageData = await fetchPlaylistTracks(
+                  sdk,
+                  playlist.id,
+                  offset,
+                )
+                pageData.items.forEach((item) => {
+                  tracks.push({
+                    ...item,
+                    source: "playlist",
+                    playlist: playlist,
+                  })
+                  fetchedPlaylistTracksCount++
+                })
+              } catch (error) {
+                errors.push({
+                  type: "playlist-tracks",
+                  error,
+                  context: { playlistId: playlist.id, offset },
+                })
+              }
             }
-
-            await Promise.all(playlistPagePromises)
 
             processedPlaylists++
             reportProgress(
