@@ -79,15 +79,15 @@ export default function AddedOverTimeHeatmap({
                 <YAxis className="text-xs" />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
                     borderRadius: "var(--radius)",
                   }}
-                  labelStyle={{ color: "hsl(var(--foreground))" }}
+                  labelStyle={{ color: "var(--foreground)" }}
                 />
                 <Bar
                   dataKey="count"
-                  fill="hsl(var(--primary))"
+                  fill="var(--primary)"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
