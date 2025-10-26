@@ -1,17 +1,42 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Music2, Disc, Radio } from "lucide-react"
+import { Music2, Disc, Radio, Sparkles } from "lucide-react"
+import { FetchProgress } from "@/lib/spotify-data-fetcher"
 
 interface LoadingIndicatorProps {
   progress: number
+  loadingProgress?: FetchProgress
 }
 
-export default function LoadingIndicator({ progress }: LoadingIndicatorProps) {
-  const icons = [Music2, Disc, Radio]
-  const currentIcon =
-    icons[Math.floor((progress / 100) * icons.length)] || Music2
-  const Icon = currentIcon
+export default function LoadingIndicator({
+  progress,
+  loadingProgress,
+}: LoadingIndicatorProps) {
+  const getPhaseInfo = () => {
+    if (!loadingProgress) {
+      return { icon: Music2, message: "Initializing..." }
+    }
+
+    switch (loadingProgress.phase) {
+      case "user":
+        return { icon: Music2, message: "Fetching user profile..." }
+      case "liked-songs":
+        return { icon: Music2, message: loadingProgress.message }
+      case "playlists":
+        return { icon: Disc, message: loadingProgress.message }
+      case "playlist-tracks":
+        return { icon: Radio, message: loadingProgress.message }
+      case "deduplication":
+        return { icon: Sparkles, message: loadingProgress.message }
+      case "complete":
+        return { icon: Sparkles, message: "Complete!" }
+      default:
+        return { icon: Music2, message: "Loading..." }
+    }
+  }
+
+  const { icon: Icon, message } = getPhaseInfo()
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
@@ -30,7 +55,9 @@ export default function LoadingIndicator({ progress }: LoadingIndicatorProps) {
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">
-                  {"Fetching your music library..."}
+                  {loadingProgress?.phase === "complete"
+                    ? "All done!"
+                    : "Loading your music library..."}
                 </span>
                 <span className="text-muted-foreground">{`${Math.round(progress)}%`}</span>
               </div>
@@ -45,10 +72,7 @@ export default function LoadingIndicator({ progress }: LoadingIndicatorProps) {
               </div>
 
               <p className="text-center text-xs text-muted-foreground">
-                {progress < 30 && "Loading liked songs..."}
-                {progress >= 30 && progress < 60 && "Fetching playlists..."}
-                {progress >= 60 && progress < 90 && "Processing tracks..."}
-                {progress >= 90 && "Almost there..."}
+                {message}
               </p>
             </div>
           </div>

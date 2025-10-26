@@ -41,15 +41,18 @@ export default function SpotifyAnalytics() {
     dataResult,
     loadingProgress,
     trackGroups,
+    fetchData,
+    authenticate,
+    isAuthenticated,
+    isInitialized,
   } = useSpotify()
-
-  if (!spotify) {
-    console.log("Spotify SDK not initialized")
-    return null
-  }
 
   const songs = dataResult?.tracks || []
   const groups = trackGroups || []
+
+  const handleFetchData = async () => {
+    await fetchData()
+  }
 
   // const handleFetchSongs = async () => {
   //   setIsLoading(true)
@@ -118,7 +121,24 @@ export default function SpotifyAnalytics() {
   //   )
   // }
 
-  if (!spotify) {
+  // Show loading while checking authentication
+  if (!isInitialized) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="mt-4 text-sm text-muted-foreground">
+              {"Initializing..."}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Step 1: Not authenticated - show login button
+  if (!isAuthenticated || !spotify) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Card className="w-full max-w-md">
@@ -134,7 +154,7 @@ export default function SpotifyAnalytics() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button onClick={() => {}} className="w-full" size="lg">
+            <Button onClick={authenticate} className="w-full" size="lg">
               <LogIn className="mr-2 h-5 w-5" />
               {"Sign in with Spotify"}
             </Button>
@@ -149,34 +169,40 @@ export default function SpotifyAnalytics() {
     )
   }
 
-  if (!dataResult || loadingProgress?.phase !== "complete") {
-    return <LoadingIndicator progress={loadingProgress?.percentage ?? 0} />
+  // Show loading indicator if data is being fetched
+  if (loadingProgress && loadingProgress.phase !== "complete") {
+    return (
+      <LoadingIndicator
+        progress={loadingProgress.percentage}
+        loadingProgress={loadingProgress}
+      />
+    )
   }
 
-  if (songs.length === 0) {
+  // Step 2: Authenticated but no data - show fetch button
+  if (!dataResult || dataResult.tracks.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle>{"Ready to Analyze"}</CardTitle>
-            <CardDescription>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
+              <Music className="h-8 w-8 text-green-500" />
+            </div>
+            <CardTitle className="text-2xl">{"Ready to Analyze"}</CardTitle>
+            <CardDescription className="text-base">
               {"Fetch your Spotify data to see your music analytics"}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {/* <Button onClick={handleFetchSongs} className="w-full" size="lg">
-              <Music className="mr-2 h-5 w-5" />
+          <CardContent className="space-y-4">
+            <Button onClick={handleFetchData} className="w-full" size="lg">
+              <RefreshCw className="mr-2 h-5 w-5" />
               {"Fetch My Music"}
             </Button>
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              className="w-full"
-              size="sm"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              {"Sign Out"}
-            </Button> */}
+            <p className="text-center text-xs text-muted-foreground">
+              {
+                "This will fetch your liked songs, playlists, and analyze for duplicates."
+              }
+            </p>
           </CardContent>
         </Card>
       </div>

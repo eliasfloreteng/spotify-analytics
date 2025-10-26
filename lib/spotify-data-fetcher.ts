@@ -26,11 +26,18 @@ export type CombinedTrack =
 
 // Progress reporting types
 export interface FetchProgress {
-  phase: "user" | "liked-songs" | "playlists" | "playlist-tracks" | "complete"
+  phase:
+    | "user"
+    | "liked-songs"
+    | "playlists"
+    | "playlist-tracks"
+    | "deduplication"
+    | "complete"
   current: number
   total: number
   percentage: number
   message: string
+  overallPercentage?: number
 }
 
 export type ProgressCallback = (progress: FetchProgress) => void
@@ -189,7 +196,7 @@ export async function fetchAllSpotifyData(
       "playlists",
       firstPage.items.length,
       totalPlaylistsCount,
-      `Fetched ${firstPage.items.length} of ${totalPlaylistsCount} playlists`,
+      `Fetched ${firstPage.items.length} of ${totalPlaylistsCount} playlists (${userPlaylists.length} owned by you)`,
     )
 
     // Calculate remaining pages
@@ -233,6 +240,7 @@ export async function fetchAllSpotifyData(
     await Promise.all(playlistPromises)
     totalPlaylists = userPlaylists.length
   } catch (error) {
+    console.error("Error fetching playlists:", error)
     errors.push({ type: "playlists", error })
   }
 
@@ -241,7 +249,7 @@ export async function fetchAllSpotifyData(
     reportProgress(
       "playlist-tracks",
       0,
-      1,
+      userPlaylists.length,
       `Fetching tracks from ${userPlaylists.length} playlists...`,
     )
 
@@ -319,6 +327,12 @@ export async function fetchAllSpotifyData(
               context: { playlistId: playlist.id },
             })
             processedPlaylists++
+            reportProgress(
+              "playlist-tracks",
+              processedPlaylists,
+              userPlaylists.length,
+              `Processed ${processedPlaylists} of ${userPlaylists.length} playlists (error on last)`,
+            )
           }
         }),
       )

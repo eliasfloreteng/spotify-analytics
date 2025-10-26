@@ -39,6 +39,9 @@ interface SpotifyContextValue {
   dataResult?: FetchAllDataResult
   trackGroups?: TrackGroup[]
   deduplicatedTracks?: TrackGroup[] // Only groups with unique songs (one representative per group)
+  fetchData: () => Promise<void>
+  authenticate: () => Promise<void>
+  isAuthenticated: boolean
 }
 
 const SpotifyContext = createContext<SpotifyContextValue | undefined>(undefined)
@@ -63,54 +66,95 @@ export function SpotifyProvider({
   const [trackGroups, setTrackGroups] = useState<TrackGroup[]>()
   const [sdk, setSdk] = useState<SpotifyApi | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
-  const { current: activeScopes } = useRef(scopes || DEFAULT_SCOPES)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const sdkRef = useRef<SpotifyApi | null>(null)
+
+  const authenticate = async () => {
+    if (!sdkRef.current) {
+      console.error("SDK not initialized")
+      return
+    }
+
+    try {
+      const { authenticated } = await sdkRef.current.authenticate()
+
+      if (authenticated) {
+        setSdk(sdkRef.current)
+        setIsAuthenticated(true)
+      }
+    } catch (error) {
+      console.error("Authentication error:", error)
+    }
+  }
+
+  const fetchData = async () => {
+    if (!sdk) {
+      console.error("SDK not initialized")
+      return
+    }
+
+    try {
+      const result = await fetchAllSpotifyData(sdk, setLoadingProgress)
+      setDataResult(result)
+
+      console.log(
+        `Fetched ${result.tracks.length} total tracks, starting deduplication...`,
+      )
+
+      // Report deduplication progress
+      setLoadingProgress({
+        phase: "deduplication",
+        current: 0,
+        total: 1,
+        percentage: 0,
+        message: `Analyzing ${result.tracks.length} tracks for duplicates...`,
+      })
+
+      // Group similar tracks for deduplication
+      try {
+        const groups = groupSimilarTracks(result.tracks)
+        console.log(
+          `Deduplication complete: ${groups.length} unique track groups`,
+        )
+        setTrackGroups(groups)
+
+        // Report completion
+        setLoadingProgress({
+          phase: "complete",
+          current: 1,
+          total: 1,
+          percentage: 100,
+          message: "All data loaded successfully!",
+        })
+      } catch (error) {
+        console.error("Error during deduplication:", error)
+        // Set empty groups on error so the app doesn't hang
+        setTrackGroups([])
+        setLoadingProgress({
+          phase: "complete",
+          current: 1,
+          total: 1,
+          percentage: 100,
+          message: "Loaded (deduplication skipped due to error)",
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error)
+    }
+  }
 
   useEffect(() => {
-    ;(async () => {
-      const auth = new AuthorizationCodeWithPKCEStrategy(
-        clientId || process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID!,
-        redirectUrl ||
-          process.env.NEXT_PUBLIC_REDIRECT_URI ||
-          "http://127.0.0.1:3000/",
-        activeScopes,
-      )
-      const internalSdk = new SpotifyApi(auth, config)
-
-      try {
-        const { authenticated } = await internalSdk.authenticate()
-
-        if (authenticated) {
-          setSdk(() => internalSdk)
-
-          const result = await fetchAllSpotifyData(
-            internalSdk,
-            setLoadingProgress,
-          )
-          setDataResult(result)
-
-          // Group similar tracks for deduplication
-          const groups = groupSimilarTracks(result.tracks)
-          setTrackGroups(groups)
-        }
-      } catch (e: Error | unknown) {
-        const error = e as Error
-        if (
-          error &&
-          error.message &&
-          error.message.includes("No verifier found in cache")
-        ) {
-          console.error(
-            "If you are seeing this error in a React Development Environment it's because React calls useEffect twice. Using the Spotify SDK performs a token exchange that is only valid once, so React re-rendering this component will result in a second, failed authentication. This will not impact your production applications (or anything running outside of Strict Mode - which is designed for debugging components).",
-            error,
-          )
-        } else {
-          console.error(e)
-        }
-      } finally {
-        setIsInitialized(true)
-      }
-    })()
-  }, [clientId, redirectUrl, config, activeScopes])
+    const auth = new AuthorizationCodeWithPKCEStrategy(
+      clientId || process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID!,
+      redirectUrl ||
+        process.env.NEXT_PUBLIC_REDIRECT_URI ||
+        "http://127.0.0.1:3000/",
+      scopes || DEFAULT_SCOPES,
+    )
+    const internalSdk = new SpotifyApi(auth, config)
+    sdkRef.current = internalSdk
+    setIsInitialized(true)
+  }, [clientId, redirectUrl, config, scopes])
 
   return (
     <SpotifyContext.Provider
@@ -121,6 +165,9 @@ export function SpotifyProvider({
         loadingProgress,
         trackGroups,
         deduplicatedTracks: trackGroups,
+        fetchData,
+        authenticate,
+        isAuthenticated,
       }}
     >
       {children}
