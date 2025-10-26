@@ -19,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased ${montserrat.className}`}>
+      <body className={`dark font-sans antialiased ${montserrat.className}`}>
         <Providers>{children}</Providers>
       </body>
     </html>
