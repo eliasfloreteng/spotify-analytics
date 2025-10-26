@@ -6,6 +6,7 @@ import {
   SimplifiedPlaylist,
   PlaylistedTrack,
   SavedTrack,
+  Artist,
 } from "@spotify/web-api-ts-sdk"
 import {
   fetchSpotifyLikedSongs,
@@ -32,6 +33,7 @@ export interface FetchProgress {
     | "liked-songs"
     | "playlists"
     | "playlist-tracks"
+    | "artists"
     | "deduplication"
     | "complete"
   current: number
@@ -45,7 +47,7 @@ export type ProgressCallback = (progress: FetchProgress) => void
 
 // Error tracking
 export interface FetchError {
-  type: "user" | "liked-songs" | "playlists" | "playlist-tracks"
+  type: "user" | "liked-songs" | "playlists" | "playlist-tracks" | "artists"
   error: any
   context?: any
 }
@@ -54,12 +56,14 @@ export interface FetchError {
 export interface FetchAllDataResult {
   tracks: CombinedTrack[]
   user: UserProfile | null
+  artists: Map<string, Artist>
   errors: FetchError[]
   stats: {
     totalLikedSongs: number
     totalPlaylists: number
     totalPlaylistTracks: number
     totalTracks: number
+    totalArtists: number
   }
 }
 
@@ -136,6 +140,7 @@ export async function fetchAllSpotifyData(
   let totalLikedSongs = 0
   let totalPlaylists = 0
   let totalPlaylistTracks = 0
+  const artistsMap = new Map<string, Artist>()
 
   const reportProgress = (
     phase: FetchProgress["phase"],
@@ -397,18 +402,85 @@ export async function fetchAllSpotifyData(
     totalPlaylistTracks = fetchedPlaylistTracksCount
   }
 
+  // Step 5: Fetch artist details with genres
+  const uniqueArtistIds = new Set<string>()
+  tracks.forEach((track) => {
+    // Skip tracks that are null or don't have artist data
+    if (track.track && track.track.artists) {
+      track.track.artists.forEach((artist) => {
+        if (artist && artist.id) {
+          uniqueArtistIds.add(artist.id)
+        }
+      })
+    }
+  })
+
+  const artistIds = Array.from(uniqueArtistIds)
+
+  if (artistIds.length > 0) {
+    reportProgress(
+      "artists",
+      0,
+      artistIds.length,
+      `Fetching details for ${artistIds.length} artists...`,
+    )
+
+    let fetchedArtistCount = 0
+    const artistPromises: Promise<void>[] = []
+
+    // Fetch artists in batches of 50 (Spotify API limit)
+    const batchSize = 50
+    for (let i = 0; i < artistIds.length; i += batchSize) {
+      const batch = artistIds.slice(i, i + batchSize)
+
+      artistPromises.push(
+        queue.add(async () => {
+          try {
+            const artistsResponse = await retryWithBackoff(() =>
+              sdk.artists.get(batch),
+            )
+
+            artistsResponse.forEach((artist) => {
+              if (artist) {
+                artistsMap.set(artist.id, artist)
+              }
+            })
+
+            fetchedArtistCount += batch.length
+            reportProgress(
+              "artists",
+              fetchedArtistCount,
+              artistIds.length,
+              `Fetched ${fetchedArtistCount} of ${artistIds.length} artists`,
+            )
+          } catch (error) {
+            errors.push({
+              type: "artists",
+              error,
+              context: { batch },
+            })
+          }
+        }),
+      )
+    }
+
+    await Promise.all(artistPromises)
+  }
+
   // Final progress report
   reportProgress("complete", 1, 1, "All data fetched successfully")
 
   return {
     tracks,
     user,
+    artists: artistsMap,
     errors,
     stats: {
       totalLikedSongs,
       totalPlaylists,
       totalPlaylistTracks,
       totalTracks: tracks.length,
+      totalArtists: artistsMap.size,
     },
   }
 }

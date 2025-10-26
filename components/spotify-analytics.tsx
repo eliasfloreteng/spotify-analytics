@@ -19,6 +19,7 @@ import {
   LogIn,
   LogOut,
   Loader2,
+  Radio,
 } from "lucide-react"
 import LoadingIndicator from "@/components/loading-indicator"
 import Dashboard from "@/components/dashboard"
@@ -26,6 +27,7 @@ import TopArtists from "@/components/top-artists"
 import TopAlbums from "@/components/top-albums"
 import MostPlaylistedSongs from "@/components/most-playlisted-songs"
 import AddedOverTimeHeatmap from "@/components/added-over-time-heatmap"
+import GenresOverTime from "@/components/genres-over-time"
 import { useSpotify } from "@/contexts/spotify-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
@@ -48,6 +50,7 @@ export default function SpotifyAnalytics() {
 
   const songs = dataResult?.tracks || []
   const groups = trackGroups || []
+  const artists = dataResult?.artists || new Map()
 
   const handleFetchData = async () => {
     await fetchData()
@@ -260,7 +263,7 @@ export default function SpotifyAnalytics() {
         )}
 
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
             <TabsTrigger value="dashboard" className="gap-2">
               <RefreshCw className="h-4 w-4" />
               <span className="hidden sm:inline">{"Dashboard"}</span>
@@ -276,6 +279,10 @@ export default function SpotifyAnalytics() {
             <TabsTrigger value="playlisted" className="gap-2">
               <ListMusic className="h-4 w-4" />
               <span className="hidden sm:inline">{"Playlisted"}</span>
+            </TabsTrigger>
+            <TabsTrigger value="genres" className="gap-2">
+              <Radio className="h-4 w-4" />
+              <span className="hidden sm:inline">{"Genres"}</span>
             </TabsTrigger>
             <TabsTrigger value="timeline" className="gap-2">
               <Calendar className="h-4 w-4" />
@@ -297,6 +304,10 @@ export default function SpotifyAnalytics() {
 
           <TabsContent value="playlisted" className="space-y-4">
             <MostPlaylistedSongs trackGroups={groups} />
+          </TabsContent>
+
+          <TabsContent value="genres" className="space-y-4">
+            <GenresOverTime trackGroups={groups} artists={artists} />
           </TabsContent>
 
           <TabsContent value="timeline" className="space-y-4">
