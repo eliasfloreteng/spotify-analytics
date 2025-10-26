@@ -56,10 +56,10 @@ export default function Dashboard({ trackGroups }: DashboardProps) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5)
 
-    // Top albums with images
+    // Top albums with images and IDs
     const albumCounts = new Map<
       string,
-      { name: string; count: number; imageUrl?: string }
+      { name: string; id: string; count: number; imageUrl?: string }
     >()
     trackGroups.forEach((group) => {
       const album = group.representativeTrack.album
@@ -70,6 +70,7 @@ export default function Dashboard({ trackGroups }: DashboardProps) {
       } else {
         albumCounts.set(key, {
           name: album.name,
+          id: album.id,
           count: 1,
           imageUrl: album.images?.[0]?.url,
         })
@@ -239,7 +240,13 @@ export default function Dashboard({ trackGroups }: DashboardProps) {
           <CardContent>
             <div className="space-y-4">
               {stats.topArtists.map((artist, index) => (
-                <div key={artist.id} className="flex items-center gap-3">
+                <a
+                  key={artist.id}
+                  href={`https://open.spotify.com/artist/${artist.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-accent cursor-pointer"
+                >
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                     {index + 1}
                   </div>
@@ -258,7 +265,7 @@ export default function Dashboard({ trackGroups }: DashboardProps) {
                       {`${artist.count} ${artist.count === 1 ? "song" : "songs"}`}
                     </p>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </CardContent>
@@ -274,7 +281,13 @@ export default function Dashboard({ trackGroups }: DashboardProps) {
           <CardContent>
             <div className="space-y-4">
               {stats.topAlbums.map((album, index) => (
-                <div key={album.name} className="flex items-center gap-3">
+                <a
+                  key={album.id}
+                  href={`https://open.spotify.com/album/${album.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-accent cursor-pointer"
+                >
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                     {index + 1}
                   </div>
@@ -293,7 +306,7 @@ export default function Dashboard({ trackGroups }: DashboardProps) {
                       {`${album.count} ${album.count === 1 ? "song" : "songs"}`}
                     </p>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </CardContent>
@@ -311,9 +324,12 @@ export default function Dashboard({ trackGroups }: DashboardProps) {
         <CardContent>
           <div className="space-y-4">
             {stats.mostPlaylisted.map((item, index) => (
-              <div
+              <a
                 key={`${item.track.id}-${index}`}
-                className="flex items-center justify-between"
+                href={`https://open.spotify.com/track/${item.track.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-accent cursor-pointer"
               >
                 <div className="flex items-center space-x-4">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
@@ -338,7 +354,7 @@ export default function Dashboard({ trackGroups }: DashboardProps) {
                 <div className="text-sm font-medium">
                   {`${item.count} ${item.count === 1 ? "playlist" : "playlists"}`}
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </CardContent>

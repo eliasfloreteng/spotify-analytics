@@ -91,7 +91,12 @@ export default function MostPlaylistedSongs({
                 key={`${item.track.id}-${index}`}
                 className="rounded-lg border bg-card p-4"
               >
-                <div className="mb-2 flex items-start justify-between">
+                <a
+                  href={`https://open.spotify.com/track/${item.track.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mb-2 flex items-start justify-between cursor-pointer transition-colors hover:opacity-80"
+                >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold text-muted-foreground">
@@ -120,7 +125,7 @@ export default function MostPlaylistedSongs({
                       {item.playlistCount === 1 ? "playlist" : "playlists"}
                     </p>
                   </div>
-                </div>
+                </a>
 
                 <div className="flex flex-wrap gap-2">
                   {item.isInLikedSongs && (

@@ -119,7 +119,12 @@ export default function TopArtists({ trackGroups }: TopArtistsProps) {
                 key={artist.name}
                 className="group flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
               >
-                <div className="flex items-center gap-4">
+                <a
+                  href={`https://open.spotify.com/artist/${artist.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-1 items-center gap-4 cursor-pointer"
+                >
                   <span className="text-2xl font-bold text-muted-foreground">
                     {index + 1}
                   </span>
@@ -136,11 +141,15 @@ export default function TopArtists({ trackGroups }: TopArtistsProps) {
                       {`${artist.count} ${artist.count === 1 ? "song" : "songs"}`}
                     </p>
                   </div>
-                </div>
+                </a>
 
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="cursor-pointer"
+                    >
                       {"View Songs"}
                     </Button>
                   </DialogTrigger>
@@ -152,9 +161,12 @@ export default function TopArtists({ trackGroups }: TopArtistsProps) {
                     <ScrollArea className="max-h-[60vh]">
                       <div className="space-y-2 pr-4">
                         {artist.tracks.map((track, idx) => (
-                          <div
+                          <a
                             key={`${track.id}-${idx}`}
-                            className="flex items-center gap-3 rounded-lg border bg-card p-3"
+                            href={`https://open.spotify.com/track/${track.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent cursor-pointer"
                           >
                             {track.album.images?.[0]?.url && (
                               <img
@@ -178,7 +190,7 @@ export default function TopArtists({ trackGroups }: TopArtistsProps) {
                                 ).padStart(2, "0")}`}
                               </p>
                             </div>
-                          </div>
+                          </a>
                         ))}
                       </div>
                     </ScrollArea>

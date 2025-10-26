@@ -92,7 +92,12 @@ export default function TopAlbums({ trackGroups }: TopAlbumsProps) {
                 key={`${item.album.id}-${item.album.name}`}
                 className="group flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
               >
-                <div className="flex items-center gap-4">
+                <a
+                  href={`https://open.spotify.com/album/${item.album.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-1 items-center gap-4 cursor-pointer"
+                >
                   <span className="text-2xl font-bold text-muted-foreground">
                     {index + 1}
                   </span>
@@ -112,11 +117,15 @@ export default function TopAlbums({ trackGroups }: TopAlbumsProps) {
                       {`${item.count} ${item.count === 1 ? "song" : "songs"}`}
                     </p>
                   </div>
-                </div>
+                </a>
 
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="cursor-pointer"
+                    >
                       {"View Songs"}
                     </Button>
                   </DialogTrigger>
@@ -131,9 +140,12 @@ export default function TopAlbums({ trackGroups }: TopAlbumsProps) {
                     <ScrollArea className="max-h-[60vh]">
                       <div className="space-y-2 pr-4">
                         {item.tracks.map((track, idx) => (
-                          <div
+                          <a
                             key={`${track.id}-${idx}`}
-                            className="rounded-lg border bg-card p-3"
+                            href={`https://open.spotify.com/track/${track.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block rounded-lg border bg-card p-3 transition-colors hover:bg-accent cursor-pointer"
                           >
                             <p className="font-medium">{track.name}</p>
                             <p className="text-sm text-muted-foreground">
@@ -144,7 +156,7 @@ export default function TopAlbums({ trackGroups }: TopAlbumsProps) {
                                 Math.floor((track.duration_ms % 60000) / 1000),
                               ).padStart(2, "0")}`}
                             </p>
-                          </div>
+                          </a>
                         ))}
                       </div>
                     </ScrollArea>

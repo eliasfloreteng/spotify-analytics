@@ -116,10 +116,17 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Ensure all buttons and clickable elements have cursor pointer */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [data-radix-collection-item] {
+    cursor: pointer;
   }
 }
 
