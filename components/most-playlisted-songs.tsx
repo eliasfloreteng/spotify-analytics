@@ -11,54 +11,68 @@ import {
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Search } from "lucide-react"
-import type { ProcessedSong } from "@/lib/song-deduplication"
+import type { TrackGroup } from "@/lib/song-deduplication"
 
 interface MostPlaylistedSongsProps {
-  songs: ProcessedSong[]
+  trackGroups: TrackGroup[]
 }
 
 export default function MostPlaylistedSongs({
-  songs,
+  trackGroups,
 }: MostPlaylistedSongsProps) {
   const [searchQuery, setSearchQuery] = useState("")
 
-  const songPlaylistCounts = useMemo(() => {
-    const counts = new Map<string, { song: ProcessedSong; count: number }>()
+  const playlistStats = useMemo(() => {
+    // Count how many times each song appears across different sources
+    const stats = trackGroups
+      .map((group) => {
+        // Count instances in playlists (not liked songs)
+        const playlistInstances = group.tracks.filter(
+          (t) => t.source === "playlist",
+        )
+        const uniquePlaylists = new Set(
+          playlistInstances.map((t) => t.playlist.id),
+        )
 
-    songs.forEach((song) => {
-      const key = song.track.id
-      const existing = counts.get(key)
-      if (existing) {
-        existing.count = song.playlistNames.length
-      } else {
-        counts.set(key, { song, count: song.playlistNames.length })
-      }
-    })
+        return {
+          group,
+          track: group.representativeTrack,
+          totalInstances: group.tracks.length,
+          playlistCount: uniquePlaylists.size,
+          playlists: Array.from(uniquePlaylists)
+            .map((id) => {
+              const instance = playlistInstances.find(
+                (t) => t.playlist.id === id,
+              )
+              return instance?.playlist
+            })
+            .filter(Boolean),
+          isInLikedSongs: group.tracks.some((t) => t.source === "liked"),
+        }
+      })
+      .filter((item) => item.playlistCount > 0) // Only show songs that are in at least one playlist
+      .sort((a, b) => b.playlistCount - a.playlistCount)
 
-    return Array.from(counts.values())
-      .filter((item) => item.count > 1)
-      .sort((a, b) => b.count - a.count)
-  }, [songs])
+    return stats
+  }, [trackGroups])
 
   const filteredSongs = useMemo(() => {
-    if (!searchQuery) return songPlaylistCounts
-    return songPlaylistCounts.filter(
+    if (!searchQuery) return playlistStats
+    return playlistStats.filter(
       (item) =>
-        item.song.track.name
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        item.song.track.artists.some((artist) =>
+        item.track.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.track.artists.some((artist) =>
           artist.name.toLowerCase().includes(searchQuery.toLowerCase()),
         ),
     )
-  }, [songPlaylistCounts, searchQuery])
+  }, [playlistStats, searchQuery])
 
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle>{"Most Playlisted Songs"}</CardTitle>
-          <CardDescription>{`Songs that appear in multiple playlists`}</CardDescription>
+          <CardDescription>{`Songs that appear in the most playlists`}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="relative mb-4">
@@ -71,53 +85,51 @@ export default function MostPlaylistedSongs({
             />
           </div>
 
-          {filteredSongs.length === 0 ? (
-            <p className="text-center text-muted-foreground">
-              {"No songs appear in multiple playlists"}
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {filteredSongs.slice(0, 100).map((item, index) => (
-                <div
-                  key={item.song.track.id}
-                  className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex gap-4">
-                      <span className="text-2xl font-bold text-muted-foreground">
+          <div className="space-y-3">
+            {filteredSongs.slice(0, 50).map((item, index) => (
+              <div
+                key={`${item.track.id}-${index}`}
+                className="rounded-lg border bg-card p-4"
+              >
+                <div className="mb-2 flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-muted-foreground">
                         {index + 1}
                       </span>
-                      <div className="flex-1">
-                        <p className="font-semibold">{item.song.track.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.song.track.artists
-                            .map((a) => a.name)
-                            .join(", ")}
+                      <div>
+                        <p className="font-semibold leading-none">
+                          {item.track.name}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.song.track.album.name}
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {item.track.artists.map((a) => a.name).join(", ")}
                         </p>
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {item.song.playlistNames.map((playlist, idx) => (
-                            <Badge
-                              key={idx}
-                              variant="secondary"
-                              className="text-xs"
-                            >
-                              {playlist}
-                            </Badge>
-                          ))}
-                        </div>
                       </div>
                     </div>
-                    <Badge variant="default" className="shrink-0">
-                      {`${item.count} ${item.count === 1 ? "playlist" : "playlists"}`}
-                    </Badge>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold">{item.playlistCount}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.playlistCount === 1 ? "playlist" : "playlists"}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+
+                <div className="flex flex-wrap gap-2">
+                  {item.isInLikedSongs && (
+                    <Badge variant="default" className="text-xs">
+                      Liked Songs
+                    </Badge>
+                  )}
+                  {item.playlists.map((playlist, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs">
+                      {playlist?.name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

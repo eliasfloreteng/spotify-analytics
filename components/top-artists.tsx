@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
-import type { ProcessedSong } from "@/lib/song-deduplication"
+import type { TrackGroup } from "@/lib/song-deduplication"
 import {
   Dialog,
   DialogContent,
@@ -21,23 +21,26 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Track } from "@spotify/web-api-ts-sdk"
 
 interface TopArtistsProps {
-  songs: ProcessedSong[]
+  trackGroups: TrackGroup[]
 }
 
-export default function TopArtists({ songs }: TopArtistsProps) {
+export default function TopArtists({ trackGroups }: TopArtistsProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedArtist, setExpandedArtist] = useState<string | null>(null)
 
   const artistStats = useMemo(() => {
-    const stats = new Map<string, { count: number; songs: ProcessedSong[] }>()
+    const stats = new Map<string, { count: number; tracks: Track[] }>()
 
-    songs.forEach((song) => {
-      song.track.artists.forEach((artist) => {
-        const existing = stats.get(artist.name) || { count: 0, songs: [] }
+    // Use only the representative track from each group (deduplicated)
+    trackGroups.forEach((group) => {
+      const track = group.representativeTrack
+      track.artists.forEach((artist) => {
+        const existing = stats.get(artist.name) || { count: 0, tracks: [] }
         existing.count++
-        existing.songs.push(song)
+        existing.tracks.push(track)
         stats.set(artist.name, existing)
       })
     })
@@ -45,7 +48,7 @@ export default function TopArtists({ songs }: TopArtistsProps) {
     return Array.from(stats.entries())
       .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.count - a.count)
-  }, [songs])
+  }, [trackGroups])
 
   const filteredArtists = useMemo(() => {
     if (!searchQuery) return artistStats
@@ -59,7 +62,7 @@ export default function TopArtists({ songs }: TopArtistsProps) {
       <Card>
         <CardHeader>
           <CardTitle>{"Top Artists"}</CardTitle>
-          <CardDescription>{`Artists with the most songs in your library`}</CardDescription>
+          <CardDescription>{`Artists with the most unique songs in your library`}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="relative mb-4">
@@ -99,24 +102,22 @@ export default function TopArtists({ songs }: TopArtistsProps) {
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>{artist.name}</DialogTitle>
-                      <DialogDescription>{`${artist.count} songs in your library`}</DialogDescription>
+                      <DialogDescription>{`${artist.count} unique songs in your library`}</DialogDescription>
                     </DialogHeader>
                     <ScrollArea className="max-h-[60vh]">
                       <div className="space-y-2 pr-4">
-                        {artist.songs.map((song, idx) => (
+                        {artist.tracks.map((track, idx) => (
                           <div
-                            key={`${song.track.id}-${idx}`}
+                            key={`${track.id}-${idx}`}
                             className="rounded-lg border bg-card p-3"
                           >
-                            <p className="font-medium">{song.track.name}</p>
+                            <p className="font-medium">{track.name}</p>
                             <p className="text-sm text-muted-foreground">
-                              {song.track.album.name}
+                              {track.album.name}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {`${Math.floor(song.track.duration_ms / 60000)}:${String(
-                                Math.floor(
-                                  (song.track.duration_ms % 60000) / 1000,
-                                ),
+                              {`${Math.floor(track.duration_ms / 60000)}:${String(
+                                Math.floor((track.duration_ms % 60000) / 1000),
                               ).padStart(2, "0")}`}
                             </p>
                           </div>

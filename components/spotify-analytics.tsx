@@ -49,6 +49,7 @@ export default function SpotifyAnalytics() {
   }
 
   const songs = dataResult?.tracks || []
+  const groups = trackGroups || []
 
   // const handleFetchSongs = async () => {
   //   setIsLoading(true)
@@ -191,7 +192,7 @@ export default function SpotifyAnalytics() {
               {"Spotify Analytics"}
             </h1>
             <p className="mt-2 text-muted-foreground">
-              {`${songs.length.toLocaleString()} songs analyzed`}
+              {`${groups.length.toLocaleString()} unique songs • ${songs.length.toLocaleString()} total tracks`}
               {lastFetched && (
                 <span className="ml-2 text-sm">{`• Last updated ${lastFetched.toLocaleDateString()}`}</span>
               )}
@@ -238,19 +239,19 @@ export default function SpotifyAnalytics() {
           </TabsContent>
 
           <TabsContent value="artists" className="space-y-4">
-            <TopArtists songs={songs} />
+            <TopArtists trackGroups={groups} />
           </TabsContent>
 
           <TabsContent value="albums" className="space-y-4">
-            <TopAlbums songs={songs} />
+            <TopAlbums trackGroups={groups} />
           </TabsContent>
 
           <TabsContent value="playlisted" className="space-y-4">
-            <MostPlaylistedSongs songs={songs} />
+            <MostPlaylistedSongs trackGroups={groups} />
           </TabsContent>
 
           <TabsContent value="timeline" className="space-y-4">
-            <AddedOverTimeHeatmap songs={songs} />
+            <AddedOverTimeHeatmap trackGroups={groups} />
           </TabsContent>
         </Tabs>
       </div>

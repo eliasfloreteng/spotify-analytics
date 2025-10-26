@@ -38,6 +38,7 @@ interface SpotifyContextValue {
   loadingProgress?: FetchProgress
   dataResult?: FetchAllDataResult
   trackGroups?: TrackGroup[]
+  deduplicatedTracks?: TrackGroup[] // Only groups with unique songs (one representative per group)
 }
 
 const SpotifyContext = createContext<SpotifyContextValue | undefined>(undefined)
@@ -113,7 +114,14 @@ export function SpotifyProvider({
 
   return (
     <SpotifyContext.Provider
-      value={{ sdk, isInitialized, dataResult, loadingProgress, trackGroups }}
+      value={{
+        sdk,
+        isInitialized,
+        dataResult,
+        loadingProgress,
+        trackGroups,
+        deduplicatedTracks: trackGroups,
+      }}
     >
       {children}
     </SpotifyContext.Provider>
