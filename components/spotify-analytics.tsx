@@ -21,11 +21,11 @@ import {
   Loader2,
 } from "lucide-react"
 import LoadingIndicator from "@/components/loading-indicator"
+import Dashboard from "@/components/dashboard"
 import TopArtists from "@/components/top-artists"
 import TopAlbums from "@/components/top-albums"
 import MostPlaylistedSongs from "@/components/most-playlisted-songs"
 import AddedOverTimeHeatmap from "@/components/added-over-time-heatmap"
-import DeduplicationStats from "@/components/deduplication-stats"
 import { useSpotify } from "@/contexts/spotify-context"
 
 export default function SpotifyAnalytics() {
@@ -236,23 +236,23 @@ export default function SpotifyAnalytics() {
           </div>
         </div>
 
-        <Tabs defaultValue="duplicates" className="space-y-6">
+        <Tabs defaultValue="dashboard" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
-            <TabsTrigger value="duplicates" className="gap-2">
+            <TabsTrigger value="dashboard" className="gap-2">
               <RefreshCw className="h-4 w-4" />
-              <span className="hidden sm:inline">{"Duplicates"}</span>
-            </TabsTrigger>
-            <TabsTrigger value="artists" className="gap-2">
-              <Music className="h-4 w-4" />
-              <span className="hidden sm:inline">{"Top Artists"}</span>
+              <span className="hidden sm:inline">{"Dashboard"}</span>
             </TabsTrigger>
             <TabsTrigger value="albums" className="gap-2">
               <Disc3 className="h-4 w-4" />
-              <span className="hidden sm:inline">{"Top Albums"}</span>
+              <span className="hidden sm:inline">{"Albums"}</span>
+            </TabsTrigger>
+            <TabsTrigger value="artists" className="gap-2">
+              <Music className="h-4 w-4" />
+              <span className="hidden sm:inline">{"Artists"}</span>
             </TabsTrigger>
             <TabsTrigger value="playlisted" className="gap-2">
               <ListMusic className="h-4 w-4" />
-              <span className="hidden sm:inline">{"Most Playlisted"}</span>
+              <span className="hidden sm:inline">{"Playlisted"}</span>
             </TabsTrigger>
             <TabsTrigger value="timeline" className="gap-2">
               <Calendar className="h-4 w-4" />
@@ -260,16 +260,16 @@ export default function SpotifyAnalytics() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="duplicates" className="space-y-4">
-            {trackGroups && <DeduplicationStats trackGroups={trackGroups} />}
-          </TabsContent>
-
-          <TabsContent value="artists" className="space-y-4">
-            <TopArtists trackGroups={groups} />
+          <TabsContent value="dashboard" className="space-y-4">
+            <Dashboard trackGroups={groups} />
           </TabsContent>
 
           <TabsContent value="albums" className="space-y-4">
             <TopAlbums trackGroups={groups} />
+          </TabsContent>
+
+          <TabsContent value="artists" className="space-y-4">
+            <TopArtists trackGroups={groups} />
           </TabsContent>
 
           <TabsContent value="playlisted" className="space-y-4">

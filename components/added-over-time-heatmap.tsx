@@ -57,8 +57,139 @@ export default function AddedOverTimeHeatmap({
     return data
   }, [trackGroups])
 
+  const stats = useMemo(() => {
+    const allDates = trackGroups.flatMap((group) =>
+      group.tracks.map((track) => new Date(track.added_at)),
+    )
+
+    if (allDates.length === 0) {
+      return {
+        oldestDate: null,
+        newestDate: null,
+        totalMonths: 0,
+        avgPerMonth: 0,
+        peakMonth: null,
+        peakCount: 0,
+      }
+    }
+
+    const oldest = new Date(Math.min(...allDates.map((d) => d.getTime())))
+    const newest = new Date(Math.max(...allDates.map((d) => d.getTime())))
+
+    const monthsDiff =
+      (newest.getFullYear() - oldest.getFullYear()) * 12 +
+      (newest.getMonth() - oldest.getMonth()) +
+      1
+
+    const avgPerMonth = Math.round(trackGroups.length / monthsDiff)
+
+    // Find peak month
+    const monthCounts = new Map<string, number>()
+    trackGroups.forEach((group) => {
+      group.tracks.forEach((track) => {
+        const date = new Date(track.added_at)
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
+        monthCounts.set(monthKey, (monthCounts.get(monthKey) || 0) + 1)
+      })
+    })
+
+    let peakMonth = ""
+    let peakCount = 0
+    monthCounts.forEach((count, month) => {
+      if (count > peakCount) {
+        peakCount = count
+        peakMonth = month
+      }
+    })
+
+    const peakDate = peakMonth
+      ? new Date(peakMonth + "-01").toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+        })
+      : null
+
+    return {
+      oldestDate: oldest.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+      }),
+      newestDate: newest.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+      }),
+      totalMonths: monthsDiff,
+      avgPerMonth,
+      peakMonth: peakDate,
+      peakCount,
+    }
+  }, [trackGroups])
+
   return (
     <div className="space-y-4">
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {"First Track"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold">{stats.oldestDate || "N/A"}</div>
+            <p className="text-xs text-muted-foreground">
+              {"Oldest track in library"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {"Latest Track"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold">{stats.newestDate || "N/A"}</div>
+            <p className="text-xs text-muted-foreground">
+              {"Most recent addition"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {"Average per Month"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {stats.avgPerMonth.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {`Over ${stats.totalMonths} months`}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {"Peak Month"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold">{stats.peakMonth || "N/A"}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.peakCount > 0
+                ? `${stats.peakCount} tracks added`
+                : "No data"}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>{"Songs Added Over Time"}</CardTitle>
