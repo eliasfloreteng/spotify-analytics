@@ -1,27 +1,26 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Montserrat } from "next/font/google"
-import "./globals.css"
-import Providers from "@/components/providers"
+import type React from "react";
+import type { Metadata } from "next";
+import { Montserrat } from "next/font/google";
+import "./globals.css";
 
-const montserrat = Montserrat({ subsets: ["latin"] })
+const montserrat = Montserrat({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Spotify Analytics",
-  description: "Analyze your Spotify library with detailed insights",
-  generator: "v0.app",
-}
+	title: "Spotify Listening Insights",
+	description:
+		"See all your tracks and albums and get insights into your listening habits over time.",
+};
 
 export default function RootLayout({
-  children,
+	children,
 }: {
-  children: React.ReactNode
+	children: React.ReactNode;
 }) {
-  return (
-    <html lang="en">
-      <body className={`dark font-sans antialiased ${montserrat.className}`}>
-        <Providers>{children}</Providers>
-      </body>
-    </html>
-  )
+	return (
+		<html lang="en">
+			<body className={`dark font-sans antialiased ${montserrat.className}`}>
+				{children}
+			</body>
+		</html>
+	);
 }

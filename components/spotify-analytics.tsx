@@ -34,12 +34,12 @@ import { AlertCircle } from "lucide-react"
 
 export default function SpotifyAnalytics() {
   const {
-    sdk: spotify,
     dataResult,
     loadingProgress,
     trackGroups,
     fetchData,
     authenticate,
+    logout,
     isAuthenticated,
     isInitialized,
     clearCache,
@@ -150,7 +150,7 @@ export default function SpotifyAnalytics() {
   }
 
   // Step 1: Not authenticated - show login button
-  if (!isAuthenticated || !spotify) {
+  if (!isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Card className="w-full max-w-md">
@@ -245,8 +245,12 @@ export default function SpotifyAnalytics() {
               {"Refresh Data"}
             </Button>
             <Button onClick={handleClearCache} variant="outline">
-              <LogOut className="mr-2 h-4 w-4" />
+              <RefreshCw className="mr-2 h-4 w-4" />
               {"Clear Cache"}
+            </Button>
+            <Button onClick={logout} variant="outline">
+              <LogOut className="mr-2 h-4 w-4" />
+              {"Log Out"}
             </Button>
           </div>
         </div>
