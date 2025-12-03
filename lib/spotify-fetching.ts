@@ -188,8 +188,8 @@ export async function fetchSpotifyData(
 	const playlistTrackAlbumIds = playlistsWithTracks.flatMap((playlist) =>
 		playlist.tracks
 			// Track can apparently be null
-			.map((track) => (track.track ? track.track.album.id : null))
-			.filter((id) => id !== null),
+			.map((track) => (track.track as Track | null)?.album.id)
+			.filter((id) => id !== undefined),
 	)
 
 	const allAlbumIds = new Set([...savedTrackAlbumIds, ...playlistTrackAlbumIds])
@@ -273,13 +273,20 @@ export async function fetchSpotifyData(
 
 	const albumsWithTracks = await getAlbumsWithTracks(Array.from(allAlbumIds))
 
-	const savedTracksArtistIds = savedTracks.flatMap((track) =>
-		track.track.artists.map((artist) => artist.id),
-	)
+	const savedTracksArtistIds = savedTracks
+		.flatMap((track) =>
+			// Track can apparently be null
+			(track.track as Track | null)?.artists.map((artist) => artist.id),
+		)
+		.filter((id) => id !== undefined)
+
 	const playlistTracksArtistIds = playlistsWithTracks.flatMap((playlist) =>
-		playlist.tracks.flatMap((track) =>
-			track.track.artists.map((artist) => artist.id),
-		),
+		playlist.tracks
+			.flatMap((track) =>
+				// Track can apparently be null
+				(track.track as Track | null)?.artists.map((artist) => artist.id),
+			)
+			.filter((id) => id !== undefined),
 	)
 	const albumTracksArtistIds = albumsWithTracks.flatMap((album) =>
 		album.tracks.flatMap((track) => track.artists.map((artist) => artist.id)),
