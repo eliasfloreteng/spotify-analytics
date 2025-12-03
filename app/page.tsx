@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { getSpotifyClient } from "@/lib/spotify"
 import { LogOut } from "lucide-react"
 import Login from "@/components/login"
-// import { fetchSpotifyData } from "@/lib/spotify-fetching"
+import { fetchSpotifyData } from "@/lib/spotify-fetching"
 
 export default async function HomePage() {
 	const spotify = await getSpotifyClient()
@@ -11,7 +11,14 @@ export default async function HomePage() {
 		return <Login />
 	}
 
-	// const data = await fetchSpotifyData(spotify)
+	const data = await fetchSpotifyData(spotify, (completed, total) => {
+		const progress = (completed / total) * 100
+		console.log(
+			`Progress: ${completed}/${total} requests completed ${progress.toFixed(2)}%`,
+		)
+	})
+
+	console.log(data)
 
 	return (
 		<div>
