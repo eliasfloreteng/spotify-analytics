@@ -10,12 +10,24 @@ import type {
 	Artist,
 } from "@spotify/web-api-ts-sdk"
 import PQueue from "p-queue"
+import { readFile, writeFile, access } from "node:fs/promises"
+import { join } from "node:path"
 
 const MAX_TRACKS_PER_PAGE = 50
 const MAX_ALBUMS_PER_REQUEST = 20
 const MAX_ARTISTS_PER_REQUEST = 50
+const CACHE_FILE_PATH = join(process.cwd(), "spotify-data-cache.json")
 
 export async function fetchSpotifyData(spotify: SpotifyApi) {
+	// Check if cache file exists and return cached data if available
+	try {
+		await access(CACHE_FILE_PATH)
+		const cachedData = await readFile(CACHE_FILE_PATH, "utf-8")
+		return JSON.parse(cachedData)
+	} catch {
+		// Cache doesn't exist, proceed with fetching
+	}
+
 	const queue = new PQueue({ concurrency: 3, interval: 1000, intervalCap: 3 })
 
 	const getUser = async () => {
@@ -274,11 +286,16 @@ export async function fetchSpotifyData(spotify: SpotifyApi) {
 
 	const artists = await getArtists(Array.from(allArtistIds))
 
-	return {
+	const data = {
 		user,
 		savedTracks,
 		playlistsWithTracks,
 		albumsWithTracks,
 		artists,
 	}
+
+	// Save data to cache file
+	await writeFile(CACHE_FILE_PATH, JSON.stringify(data, null, 2), "utf-8")
+
+	return data
 }
