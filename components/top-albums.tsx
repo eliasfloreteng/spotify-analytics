@@ -49,7 +49,7 @@ export default function TopAlbums({ albumStats }: TopAlbumsProps) {
 				</CardHeader>
 				<CardContent>
 					<div className="relative mb-4">
-						<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						<Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
 						<Input
 							placeholder="Search albums..."
 							value={searchQuery}
@@ -68,9 +68,9 @@ export default function TopAlbums({ albumStats }: TopAlbumsProps) {
 									href={`https://open.spotify.com/album/${item.album.id}`}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="flex flex-1 items-center gap-4 cursor-pointer"
+									className="flex flex-1 cursor-pointer items-center gap-4"
 								>
-									<span className="text-2xl font-bold text-muted-foreground">
+									<span className="font-bold text-2xl text-muted-foreground">
 										{index + 1}
 									</span>
 									{item.album.images?.[0]?.url && (
@@ -82,10 +82,10 @@ export default function TopAlbums({ albumStats }: TopAlbumsProps) {
 									)}
 									<div>
 										<p className="font-semibold">{item.album.name}</p>
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground text-sm">
 											{item.album.artists.map((a) => a.name).join(", ")}
 										</p>
-										<p className="text-xs text-muted-foreground">
+										<p className="text-muted-foreground text-xs">
 											{`${item.count} ${item.count === 1 ? "song" : "songs"}`}
 										</p>
 									</div>
@@ -117,13 +117,13 @@ export default function TopAlbums({ albumStats }: TopAlbumsProps) {
 														href={`https://open.spotify.com/track/${track.id}`}
 														target="_blank"
 														rel="noopener noreferrer"
-														className="block rounded-lg border bg-card p-3 transition-colors hover:bg-accent cursor-pointer"
+														className="block cursor-pointer rounded-lg border bg-card p-3 transition-colors hover:bg-accent"
 													>
 														<p className="font-medium">{track.name}</p>
-														<p className="text-sm text-muted-foreground">
+														<p className="text-muted-foreground text-sm">
 															{track.artists.map((a) => a.name).join(", ")}
 														</p>
-														<p className="text-xs text-muted-foreground">
+														<p className="text-muted-foreground text-xs">
 															{`${Math.floor(track.duration_ms / 60000)}:${String(
 																Math.floor((track.duration_ms % 60000) / 1000),
 															).padStart(2, "0")}`}

@@ -34,7 +34,7 @@ export default function WeeklyActivityGraph({
 	);
 
 	const currentYearData = useMemo(() => {
-		const year = parseInt(selectedYear);
+		const year = parseInt(selectedYear, 10);
 		return dailyDataByYear.get(year) || [];
 	}, [selectedYear, dailyDataByYear]);
 
@@ -156,13 +156,13 @@ export default function WeeklyActivityGraph({
 					<div className="flex gap-3 pl-[68px]">
 						<div className="flex-1 overflow-x-auto">
 							<div
-								className="inline-flex relative h-6"
+								className="relative inline-flex h-6"
 								style={{ minWidth: `${weekGroups.length * 18}px` }}
 							>
 								{monthLabels.map(({ month, weekIndex }) => (
 									<div
 										key={`${month}-${weekIndex}`}
-										className="absolute text-sm text-muted-foreground"
+										className="absolute text-muted-foreground text-sm"
 										style={{ left: `${weekIndex * 18}px` }}
 									>
 										{month}
@@ -173,8 +173,8 @@ export default function WeeklyActivityGraph({
 					</div>
 
 					{/* Grid */}
-					<div className="flex gap-3 items-start">
-						<div className="flex flex-col gap-1 text-xs text-muted-foreground w-12 items-end pr-2 h-fit">
+					<div className="flex items-start gap-3">
+						<div className="flex h-fit w-12 flex-col items-end gap-1 pr-2 text-muted-foreground text-xs">
 							<div style={{ height: "14px", lineHeight: "14px" }}>{"Mon"}</div>
 							<div style={{ height: "14px" }}></div>
 							<div style={{ height: "14px", lineHeight: "14px" }}>{"Wed"}</div>
@@ -183,7 +183,7 @@ export default function WeeklyActivityGraph({
 							<div style={{ height: "14px" }}></div>
 							<div style={{ height: "14px", lineHeight: "14px" }}>{"Sun"}</div>
 						</div>
-						<div className="flex-1 overflow-x-auto h-fit">
+						<div className="h-fit flex-1 overflow-x-auto">
 							<div className="inline-flex gap-1">
 								{weekGroups.map((week, weekIndex) => (
 									<div key={weekIndex} className="flex flex-col gap-1">
@@ -192,7 +192,7 @@ export default function WeeklyActivityGraph({
 												return (
 													<div
 														key={dayIndex}
-														className="w-[14px] h-[14px] bg-transparent"
+														className="h-[14px] w-[14px] bg-transparent"
 													/>
 												);
 											}
@@ -200,7 +200,7 @@ export default function WeeklyActivityGraph({
 											return (
 												<div
 													key={dayIndex}
-													className={`w-[14px] h-[14px] rounded-sm cursor-pointer transition-all hover:ring-2 hover:ring-primary ${getLevelColor(day.level)}`}
+													className={`h-[14px] w-[14px] cursor-pointer rounded-sm transition-all hover:ring-2 hover:ring-primary ${getLevelColor(day.level)}`}
 													onMouseEnter={(e) => handleMouseEnter(day, e)}
 													onMouseLeave={handleMouseLeave}
 												/>
@@ -213,12 +213,12 @@ export default function WeeklyActivityGraph({
 					</div>
 
 					{/* Legend */}
-					<div className="flex items-center gap-2 text-sm text-muted-foreground">
+					<div className="flex items-center gap-2 text-muted-foreground text-sm">
 						<span>{"Less"}</span>
 						{[0, 1, 2, 3, 4].map((level) => (
 							<div
 								key={level}
-								className={`w-[14px] h-[14px] rounded-sm ${getLevelColor(level)}`}
+								className={`h-[14px] w-[14px] rounded-sm ${getLevelColor(level)}`}
 							/>
 						))}
 						<span>{"More"}</span>
@@ -228,17 +228,17 @@ export default function WeeklyActivityGraph({
 				{/* Tooltip */}
 				{hoveredDay && (
 					<div
-						className="fixed z-50 pointer-events-none"
+						className="pointer-events-none fixed z-50"
 						style={{
 							left: `${tooltipPosition.x + 10}px`,
 							top: `${tooltipPosition.y + 10}px`,
 						}}
 					>
-						<div className="bg-card border border-border rounded-md shadow-lg p-2 text-sm">
+						<div className="rounded-md border border-border bg-card p-2 text-sm shadow-lg">
 							<div className="font-medium">
 								{hoveredDay.count} {hoveredDay.count === 1 ? "song" : "songs"}
 							</div>
-							<div className="text-xs text-muted-foreground">
+							<div className="text-muted-foreground text-xs">
 								{hoveredDay.date.toLocaleDateString("en-US", {
 									weekday: "short",
 									month: "short",

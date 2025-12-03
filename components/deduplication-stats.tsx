@@ -25,14 +25,14 @@ export default function DeduplicationStats({
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Total Tracks</CardTitle>
+						<CardTitle className="font-medium text-sm">Total Tracks</CardTitle>
 						<Music2 className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">
+						<div className="font-bold text-2xl">
 							{stats.totalTracks.toLocaleString()}
 						</div>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-muted-foreground text-xs">
 							{stats.totalGroups.toLocaleString()} unique songs
 						</p>
 					</CardContent>
@@ -40,16 +40,16 @@ export default function DeduplicationStats({
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
+						<CardTitle className="font-medium text-sm">
 							Duplicate Groups
 						</CardTitle>
 						<Copy className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">
+						<div className="font-bold text-2xl">
 							{stats.multiTrackGroups.toLocaleString()}
 						</div>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-muted-foreground text-xs">
 							{((stats.multiTrackGroups / stats.totalGroups) * 100).toFixed(1)}%
 							of all songs
 						</p>
@@ -58,12 +58,12 @@ export default function DeduplicationStats({
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Largest Group</CardTitle>
+						<CardTitle className="font-medium text-sm">Largest Group</CardTitle>
 						<Layers className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{stats.largestGroup}</div>
-						<p className="text-xs text-muted-foreground">
+						<div className="font-bold text-2xl">{stats.largestGroup}</div>
+						<p className="text-muted-foreground text-xs">
 							instances of same song
 						</p>
 					</CardContent>
@@ -71,7 +71,7 @@ export default function DeduplicationStats({
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Match Types</CardTitle>
+						<CardTitle className="font-medium text-sm">Match Types</CardTitle>
 						<GitMerge className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
@@ -131,7 +131,7 @@ export default function DeduplicationStats({
 												{matchType}
 											</Badge>
 										</div>
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground text-sm">
 											{track.artists.map((a) => a.name).join(", ")}
 										</p>
 										<div className="flex flex-wrap gap-2 pt-2">
@@ -145,10 +145,10 @@ export default function DeduplicationStats({
 										</div>
 									</div>
 									<div className="flex flex-col items-end gap-1">
-										<div className="text-2xl font-bold">
+										<div className="font-bold text-2xl">
 											{group.tracks.length}
 										</div>
-										<p className="text-xs text-muted-foreground">instances</p>
+										<p className="text-muted-foreground text-xs">instances</p>
 									</div>
 								</div>
 							);

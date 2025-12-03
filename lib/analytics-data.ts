@@ -310,7 +310,7 @@ export function calculateTimelineStats(
 		.map(([month, count]) => ({
 			month,
 			count,
-			date: new Date(month + "-01"),
+			date: new Date(`${month}-01`),
 		}))
 		.sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -327,7 +327,7 @@ export function calculateTimelineStats(
 
 	// Format data
 	const timelineData = data.map(({ month, count }) => ({
-		month: new Date(month + "-01").toLocaleDateString("en-US", {
+		month: new Date(`${month}-01`).toLocaleDateString("en-US", {
 			year: "numeric",
 			month: "short",
 		}),
@@ -381,7 +381,7 @@ export function calculateTimelineStats(
 		});
 
 		const peakDate = peakMonth
-			? new Date(peakMonth + "-01").toLocaleDateString("en-US", {
+			? new Date(`${peakMonth}-01`).toLocaleDateString("en-US", {
 					year: "numeric",
 					month: "long",
 				})
@@ -517,7 +517,7 @@ export function calculateGenreData(
 	const quarterlyData = new Map<string, Map<string, number>>();
 
 	timeline.forEach((item) => {
-		const date = new Date(item.month + "-01");
+		const date = new Date(`${item.month}-01`);
 		const year = date.getFullYear();
 		const month = date.getMonth();
 		const quarter = Math.floor(month / 3) + 1;

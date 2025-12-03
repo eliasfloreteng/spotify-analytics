@@ -45,7 +45,7 @@ export default function TopArtists({ artistStats }: TopArtistsProps) {
 				</CardHeader>
 				<CardContent>
 					<div className="relative mb-4">
-						<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						<Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
 						<Input
 							placeholder="Search artists..."
 							value={searchQuery}
@@ -64,9 +64,9 @@ export default function TopArtists({ artistStats }: TopArtistsProps) {
 									href={`https://open.spotify.com/artist/${artist.id}`}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="flex flex-1 items-center gap-4 cursor-pointer"
+									className="flex flex-1 cursor-pointer items-center gap-4"
 								>
-									<span className="text-2xl font-bold text-muted-foreground">
+									<span className="font-bold text-2xl text-muted-foreground">
 										{index + 1}
 									</span>
 									{artist.imageUrl && (
@@ -78,7 +78,7 @@ export default function TopArtists({ artistStats }: TopArtistsProps) {
 									)}
 									<div>
 										<p className="font-semibold">{artist.name}</p>
-										<p className="text-xs text-muted-foreground">
+										<p className="text-muted-foreground text-xs">
 											{`${artist.count} ${artist.count === 1 ? "song" : "songs"}`}
 										</p>
 									</div>
@@ -107,7 +107,7 @@ export default function TopArtists({ artistStats }: TopArtistsProps) {
 														href={`https://open.spotify.com/track/${track.id}`}
 														target="_blank"
 														rel="noopener noreferrer"
-														className="flex items-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent cursor-pointer"
+														className="flex cursor-pointer items-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent"
 													>
 														{track.album.images?.[0]?.url && (
 															<img
@@ -116,14 +116,14 @@ export default function TopArtists({ artistStats }: TopArtistsProps) {
 																className="h-12 w-12 flex-shrink-0 rounded object-cover"
 															/>
 														)}
-														<div className="flex-1 min-w-0">
-															<p className="font-medium truncate">
+														<div className="min-w-0 flex-1">
+															<p className="truncate font-medium">
 																{track.name}
 															</p>
-															<p className="text-sm text-muted-foreground truncate">
+															<p className="truncate text-muted-foreground text-sm">
 																{track.album.name}
 															</p>
-															<p className="text-xs text-muted-foreground">
+															<p className="text-muted-foreground text-xs">
 																{`${Math.floor(track.duration_ms / 60000)}:${String(
 																	Math.floor(
 																		(track.duration_ms % 60000) / 1000,

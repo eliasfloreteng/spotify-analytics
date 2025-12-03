@@ -58,7 +58,7 @@ export function mapTrackGroupsToGenres(
 		// Collect genres from all artists
 		artistIds.forEach((artistId) => {
 			const artist = artistsMap.get(artistId);
-			if (artist && artist.genres) {
+			if (artist?.genres) {
 				artist.genres.forEach((genre) => genreSet.add(genre));
 			}
 		});
@@ -89,7 +89,7 @@ export function calculateGenreStats(
 				genreArtistSet.set(genre, new Set());
 			}
 			group.representativeTrack.artists.forEach((artist) => {
-				genreArtistSet.get(genre)!.add(artist.id);
+				genreArtistSet.get(genre)?.add(artist.id);
 			});
 		});
 	});
@@ -139,7 +139,7 @@ export function calculateGenreTimeline(
 	const timeline: GenreTimelineData[] = Array.from(monthlyGenres.entries())
 		.map(([month, genres]) => ({
 			month,
-			date: new Date(month + "-01"),
+			date: new Date(`${month}-01`),
 			genres,
 		}))
 		.sort((a, b) => a.date.getTime() - b.date.getTime());
