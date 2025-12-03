@@ -100,7 +100,7 @@ export default function MostPlaylistedSongs({
 										</Badge>
 									)}
 									{item.playlists.map((playlist, idx) => (
-										<Badge key={idx} variant="outline" className="text-xs">
+										<Badge key={idx} variant="secondary" className="text-xs">
 											{playlist?.name}
 										</Badge>
 									))}
