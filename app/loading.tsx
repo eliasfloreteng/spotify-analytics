@@ -18,7 +18,8 @@ export default function Loading() {
 					<EmptyTitle>Loading your music library...</EmptyTitle>
 					<EmptyDescription>
 						Please wait while we load your music library. Do not refresh the
-						page.
+						page. This may take up to five minutes if you have a lot of songs
+						and playlists.
 					</EmptyDescription>
 				</EmptyHeader>
 			</Empty>
