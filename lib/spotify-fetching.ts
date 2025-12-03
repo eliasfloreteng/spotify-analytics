@@ -9,20 +9,22 @@ import type {
 	SimplifiedTrack,
 	Artist,
 } from "@spotify/web-api-ts-sdk"
+import PQueue from "p-queue"
 
 const MAX_TRACKS_PER_PAGE = 50
 const MAX_ALBUMS_PER_REQUEST = 20
 const MAX_ARTISTS_PER_REQUEST = 50
 
 export async function fetchSpotifyData(spotify: SpotifyApi) {
+	const queue = new PQueue({ concurrency: 3, interval: 1000, intervalCap: 3 })
+
 	const getUser = async () => {
-		return await spotify.currentUser.profile()
+		return await queue.add(() => spotify.currentUser.profile())
 	}
 
 	const getSavedTracks = async () => {
-		const initialSavedTracks = await spotify.currentUser.tracks.savedTracks(
-			MAX_TRACKS_PER_PAGE,
-			0,
+		const initialSavedTracks = await queue.add(() =>
+			spotify.currentUser.tracks.savedTracks(MAX_TRACKS_PER_PAGE, 0),
 		)
 
 		const allSavedTracksPromises: Promise<Page<SavedTrack>>[] = [
@@ -35,7 +37,9 @@ export async function fetchSpotifyData(spotify: SpotifyApi) {
 			offset += MAX_TRACKS_PER_PAGE
 		) {
 			allSavedTracksPromises.push(
-				spotify.currentUser.tracks.savedTracks(MAX_TRACKS_PER_PAGE, offset),
+				queue.add(() =>
+					spotify.currentUser.tracks.savedTracks(MAX_TRACKS_PER_PAGE, offset),
+				),
 			)
 		}
 
@@ -44,12 +48,14 @@ export async function fetchSpotifyData(spotify: SpotifyApi) {
 	}
 
 	const getPlaylistTracks = async (playlistId: string) => {
-		const initialPlaylistTracks = await spotify.playlists.getPlaylistItems(
-			playlistId,
-			undefined,
-			undefined,
-			MAX_TRACKS_PER_PAGE,
-			0,
+		const initialPlaylistTracks = await queue.add(() =>
+			spotify.playlists.getPlaylistItems(
+				playlistId,
+				undefined,
+				undefined,
+				MAX_TRACKS_PER_PAGE,
+				0,
+			),
 		)
 
 		const allPlaylistTracksPromises: Promise<Page<PlaylistedTrack<Track>>>[] = [
@@ -61,12 +67,14 @@ export async function fetchSpotifyData(spotify: SpotifyApi) {
 			offset += MAX_TRACKS_PER_PAGE
 		) {
 			allPlaylistTracksPromises.push(
-				spotify.playlists.getPlaylistItems(
-					playlistId,
-					undefined,
-					undefined,
-					MAX_TRACKS_PER_PAGE,
-					offset,
+				queue.add(() =>
+					spotify.playlists.getPlaylistItems(
+						playlistId,
+						undefined,
+						undefined,
+						MAX_TRACKS_PER_PAGE,
+						offset,
+					),
 				),
 			)
 		}
@@ -75,9 +83,8 @@ export async function fetchSpotifyData(spotify: SpotifyApi) {
 	}
 
 	const getUserPlaylistsWithTracks = async () => {
-		const initialPlaylistsPage = await spotify.currentUser.playlists.playlists(
-			MAX_TRACKS_PER_PAGE,
-			0,
+		const initialPlaylistsPage = await queue.add(() =>
+			spotify.currentUser.playlists.playlists(MAX_TRACKS_PER_PAGE, 0),
 		)
 
 		const allTrackPromises: Promise<{
@@ -98,8 +105,13 @@ export async function fetchSpotifyData(spotify: SpotifyApi) {
 			offset += MAX_TRACKS_PER_PAGE
 		) {
 			remainingPlaylistPromises.push(
-				spotify.currentUser.playlists
-					.playlists(MAX_TRACKS_PER_PAGE, offset)
+				queue
+					.add(() =>
+						spotify.currentUser.playlists.playlists(
+							MAX_TRACKS_PER_PAGE,
+							offset,
+						),
+					)
 					.then((page) => {
 						page.items.forEach((playlist) => {
 							allTrackPromises.push(
@@ -145,7 +157,14 @@ export async function fetchSpotifyData(spotify: SpotifyApi) {
 			offset += MAX_TRACKS_PER_PAGE
 		) {
 			allAlbumTracksPromises.push(
-				spotify.albums.tracks(albumId, undefined, MAX_TRACKS_PER_PAGE, offset),
+				queue.add(() =>
+					spotify.albums.tracks(
+						albumId,
+						undefined,
+						MAX_TRACKS_PER_PAGE,
+						offset,
+					),
+				),
 			)
 		}
 
@@ -171,28 +190,30 @@ export async function fetchSpotifyData(spotify: SpotifyApi) {
 		}>[] = []
 
 		const albumChunkPromises = albumIdsChunks.map((chunk) =>
-			spotify.albums.get(chunk).then((albums) => {
-				albums.forEach((album) => {
-					if (album.total_tracks <= MAX_TRACKS_PER_PAGE) {
-						allAlbumPromises.push(
-							Promise.resolve({
-								album,
-								tracks: album.tracks.items,
-							}),
-						)
-					} else {
-						allAlbumPromises.push(
-							getAdditionalAlbumTracks(album.id, album.total_tracks).then(
-								(additionalTracks) => ({
+			queue
+				.add(() => spotify.albums.get(chunk))
+				.then((albums) => {
+					albums.forEach((album) => {
+						if (album.total_tracks <= MAX_TRACKS_PER_PAGE) {
+							allAlbumPromises.push(
+								Promise.resolve({
 									album,
-									tracks: [...album.tracks.items, ...additionalTracks],
+									tracks: album.tracks.items,
 								}),
-							),
-						)
-					}
-				})
-				return albums
-			}),
+							)
+						} else {
+							allAlbumPromises.push(
+								getAdditionalAlbumTracks(album.id, album.total_tracks).then(
+									(additionalTracks) => ({
+										album,
+										tracks: [...album.tracks.items, ...additionalTracks],
+									}),
+								),
+							)
+						}
+					})
+					return albums
+				}),
 		)
 
 		await Promise.all(albumChunkPromises)
@@ -238,9 +259,11 @@ export async function fetchSpotifyData(spotify: SpotifyApi) {
 		}>[] = []
 
 		const artistChunkPromises = artistIdsChunks.map((chunk) =>
-			spotify.artists.get(chunk).then((artists) => {
-				return artists
-			}),
+			queue
+				.add(() => spotify.artists.get(chunk))
+				.then((artists) => {
+					return artists
+				}),
 		)
 
 		await Promise.all(artistChunkPromises)
