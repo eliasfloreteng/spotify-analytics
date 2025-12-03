@@ -1,7 +1,5 @@
-import { LogOut } from "lucide-react";
 import Login from "@/components/login";
 import SpotifyAnalytics from "@/components/spotify-analytics";
-import { Button } from "@/components/ui/button";
 import {
 	calculateAlbumStats,
 	calculateArtistStats,
@@ -16,7 +14,6 @@ import {
 	groupSimilarTracks,
 } from "@/lib/song-deduplication";
 import { getSpotifyClient } from "@/lib/spotify";
-import { logout } from "@/lib/spotify-actions";
 import { fetchSpotifyData } from "@/lib/spotify-fetching";
 
 export default async function HomePage() {
@@ -25,7 +22,7 @@ export default async function HomePage() {
 		return <Login />;
 	}
 
-	const { user, savedTracks, playlistsWithTracks, albumsWithTracks, artists } =
+	const { user, savedTracks, playlistsWithTracks, artists } =
 		await fetchSpotifyData(spotify, (completed, total) => {
 			const progress = (completed / total) * 100;
 			console.log(
@@ -68,24 +65,17 @@ export default async function HomePage() {
 	const genreData = calculateGenreData(groups, artistMap);
 
 	return (
-		<div>
-			<h1 className="font-bold text-2xl">Hello {user.display_name}</h1>
-			<Button variant="outline" type="button" onClick={logout}>
-				<LogOut className="mr-2 h-4 w-4" />
-				Logout
-			</Button>
-
-			<SpotifyAnalytics
-				groups={groups}
-				combinedTracks={combinedTracks}
-				dashboardStats={dashboardStats}
-				artistStats={artistStats}
-				albumStats={albumStats}
-				playlistStats={playlistStats}
-				timelineStats={timelineStats}
-				weeklyActivityData={weeklyActivityData}
-				genreData={genreData}
-			/>
-		</div>
+		<SpotifyAnalytics
+			user={user}
+			groups={groups}
+			combinedTracks={combinedTracks}
+			dashboardStats={dashboardStats}
+			artistStats={artistStats}
+			albumStats={albumStats}
+			playlistStats={playlistStats}
+			timelineStats={timelineStats}
+			weeklyActivityData={weeklyActivityData}
+			genreData={genreData}
+		/>
 	);
 }

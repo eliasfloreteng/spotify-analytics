@@ -1,9 +1,11 @@
 "use client";
 
+import type { UserProfile } from "@spotify/web-api-ts-sdk";
 import {
 	Calendar,
 	Disc3,
 	ListMusic,
+	LogOut,
 	Music,
 	Radio,
 	RefreshCw,
@@ -14,6 +16,7 @@ import GenresOverTime from "@/components/genres-over-time";
 import MostPlaylistedSongs from "@/components/most-playlisted-songs";
 import TopAlbums from "@/components/top-albums";
 import TopArtists from "@/components/top-artists";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
 	AlbumStats,
@@ -25,8 +28,10 @@ import type {
 	WeeklyActivityData,
 } from "@/lib/analytics-data";
 import type { CombinedTrack, TrackGroup } from "@/lib/song-deduplication";
+import { logout } from "@/lib/spotify-actions";
 
 export default function SpotifyAnalytics({
+	user,
 	groups,
 	combinedTracks: songs,
 	dashboardStats,
@@ -37,6 +42,7 @@ export default function SpotifyAnalytics({
 	weeklyActivityData,
 	genreData,
 }: {
+	user: UserProfile;
 	groups: TrackGroup[];
 	combinedTracks: CombinedTrack[];
 	dashboardStats: DashboardStats;
@@ -58,6 +64,15 @@ export default function SpotifyAnalytics({
 						<p className="mt-2 text-muted-foreground">
 							{`${groups.length.toLocaleString()} unique songs • ${songs.length.toLocaleString()} total tracks`}
 						</p>
+					</div>
+					<div className="flex items-center gap-4">
+						<span className="text-muted-foreground text-sm">
+							Hello {user.display_name}
+						</span>
+						<Button variant="outline" type="button" onClick={logout}>
+							<LogOut className="mr-2 h-4 w-4" />
+							Logout
+						</Button>
 					</div>
 				</div>
 
