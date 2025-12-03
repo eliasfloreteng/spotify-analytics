@@ -11,13 +11,12 @@ import type {
 	UserProfile,
 } from "@spotify/web-api-ts-sdk"
 import PQueue from "p-queue"
-import { readFile, writeFile, access } from "node:fs/promises"
-import { join } from "node:path"
+import superjson from "superjson"
 
 const MAX_TRACKS_PER_PAGE = 50
 const MAX_ALBUMS_PER_REQUEST = 20
 const MAX_ARTISTS_PER_REQUEST = 50
-const CACHE_FILE_PATH = join(process.cwd(), "spotify-data-cache.json")
+const CACHE_FILE_PATH = "./spotify-data-cache.json"
 
 function createEmptyPage<T>(): Page<T> {
 	return {
@@ -50,9 +49,9 @@ export async function fetchSpotifyData(
 	onProgress?: (completed: number, total: number) => void,
 ) {
 	try {
-		await access(CACHE_FILE_PATH)
-		const cachedData = await readFile(CACHE_FILE_PATH, "utf-8")
-		return JSON.parse(cachedData) as SpotifyData
+		const cachedData = await Bun.file(CACHE_FILE_PATH).json()
+		console.log("Cached data found, returning cached data")
+		return cachedData as SpotifyData
 	} catch (error) {
 		console.error("Error accessing cache file:", error)
 	}
@@ -406,7 +405,8 @@ export async function fetchSpotifyData(
 		artists,
 	}
 
-	await writeFile(CACHE_FILE_PATH, JSON.stringify(data), "utf-8")
+	const cacheFile = Bun.file(CACHE_FILE_PATH)
+	await cacheFile.write(superjson.stringify(data))
 
 	return data
 }
