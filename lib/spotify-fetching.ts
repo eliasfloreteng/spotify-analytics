@@ -410,7 +410,7 @@ export async function fetchSpotifyData(
 		artists,
 	}
 
-	await writeFile(CACHE_FILE_PATH, JSON.stringify(data, null, 2), "utf-8")
+	await writeFile(CACHE_FILE_PATH, JSON.stringify(data), "utf-8")
 
 	return data
 }
