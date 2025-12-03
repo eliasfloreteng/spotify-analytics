@@ -1,13 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { clearSession, getSession, SPOTIFY_SCOPES, setTokens } from "./spotify";
-
-interface SpotifyTokens {
-	access_token: string;
-	refresh_token: string;
-	expires_at: number;
-}
+import {
+	clearSession,
+	getSession,
+	SPOTIFY_SCOPES,
+	type SpotifyTokens,
+	setTokens,
+} from "./spotify";
 
 async function refreshTokens(
 	refreshToken: string,

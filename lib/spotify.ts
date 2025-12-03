@@ -2,13 +2,13 @@ import { type AccessToken, SpotifyApi } from "@spotify/web-api-ts-sdk";
 import { getIronSession, type SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
 
-interface SpotifyTokens {
+export interface SpotifyTokens {
 	access_token: string;
 	refresh_token: string;
 	expires_at: number;
 }
 
-interface SessionData {
+export interface SessionData {
 	spotify?: SpotifyTokens;
 }
 

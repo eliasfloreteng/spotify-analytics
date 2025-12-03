@@ -16,12 +16,10 @@ import {
 	groupSimilarTracks,
 } from "@/lib/song-deduplication";
 import { getSpotifyClient } from "@/lib/spotify";
-import { logout, refreshTokensIfNeeded } from "@/lib/spotify-actions";
+import { logout } from "@/lib/spotify-actions";
 import { fetchSpotifyData } from "@/lib/spotify-fetching";
 
 export default async function HomePage() {
-	await refreshTokensIfNeeded();
-
 	const spotify = await getSpotifyClient();
 	if (!spotify) {
 		return <Login />;
