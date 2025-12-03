@@ -1,6 +1,5 @@
 "use client"
 
-import { useMemo, useEffect, useState } from "react"
 import {
 	Card,
 	CardContent,
@@ -9,143 +8,13 @@ import {
 	CardTitle,
 } from "@/components/ui/card"
 import { Music, Disc3, ListMusic, TrendingUp } from "lucide-react"
-import type { TrackGroup } from "@/lib/song-deduplication"
-import type { Artist } from "@spotify/web-api-ts-sdk"
+import type { DashboardStats } from "@/lib/analytics-data"
 
 interface DashboardProps {
-	trackGroups: TrackGroup[]
-	artists: Map<string, Artist>
+	stats: DashboardStats
 }
 
-export default function Dashboard({ trackGroups, artists }: DashboardProps) {
-	const [artistImages, setArtistImages] = useState<Map<string, string>>(
-		new Map(),
-	)
-
-	const stats = useMemo(() => {
-		// Calculate various statistics
-		const uniqueSongs = trackGroups.length
-		const totalTracks = trackGroups.reduce(
-			(sum, group) => sum + group.tracks.length,
-			0,
-		)
-		const duplicates = totalTracks - uniqueSongs
-
-		// Top artists with IDs
-		const artistCounts = new Map<
-			string,
-			{ name: string; id: string; count: number }
-		>()
-		trackGroups.forEach((group) => {
-			group.representativeTrack.artists.forEach((artist) => {
-				const existing = artistCounts.get(artist.id)
-				if (existing) {
-					existing.count++
-				} else {
-					artistCounts.set(artist.id, {
-						name: artist.name,
-						id: artist.id,
-						count: 1,
-					})
-				}
-			})
-		})
-		const topArtists = Array.from(artistCounts.values())
-			.sort((a, b) => b.count - a.count)
-			.slice(0, 5)
-
-		// Top albums with images and IDs
-		const albumCounts = new Map<
-			string,
-			{ name: string; id: string; count: number; imageUrl?: string }
-		>()
-		trackGroups.forEach((group) => {
-			const album = group.representativeTrack.album
-			const key = `${album.id}-${album.name}`
-			const existing = albumCounts.get(key)
-			if (existing) {
-				existing.count++
-			} else {
-				albumCounts.set(key, {
-					name: album.name,
-					id: album.id,
-					count: 1,
-					imageUrl: album.images?.[0]?.url,
-				})
-			}
-		})
-		const topAlbums = Array.from(albumCounts.values())
-			.sort((a, b) => b.count - a.count)
-			.slice(0, 5)
-
-		// Most playlisted songs
-		const playlistCounts = trackGroups
-			.map((group) => {
-				const playlistInstances = group.tracks.filter(
-					(t) => t.source === "playlist",
-				)
-				const uniquePlaylists = new Set(
-					playlistInstances.map((t) => t.playlist.id),
-				)
-				return {
-					track: group.representativeTrack,
-					count: uniquePlaylists.size,
-				}
-			})
-			.filter((item) => item.count > 0)
-			.sort((a, b) => b.count - a.count)
-			.slice(0, 5)
-
-		// Calculate average tracks per playlist
-		const playlistTrackCounts = new Map<string, number>()
-		trackGroups.forEach((group) => {
-			group.tracks.forEach((track) => {
-				if (track.source === "playlist") {
-					const id = track.playlist.id
-					playlistTrackCounts.set(id, (playlistTrackCounts.get(id) || 0) + 1)
-				}
-			})
-		})
-		const avgTracksPerPlaylist =
-			playlistTrackCounts.size > 0
-				? Math.round(
-						Array.from(playlistTrackCounts.values()).reduce(
-							(sum, count) => sum + count,
-							0,
-						) / playlistTrackCounts.size,
-					)
-				: 0
-
-		return {
-			uniqueSongs,
-			totalTracks,
-			duplicates,
-			topArtists,
-			topAlbums,
-			playlistCounts: playlistTrackCounts.size,
-			avgTracksPerPlaylist,
-			mostPlaylisted: playlistCounts,
-		}
-	}, [trackGroups])
-
-	// Fetch artist images for top 5 artists
-	useEffect(() => {
-		if (stats.topArtists.length === 0) return
-
-		const fetchArtistImages = async () => {
-			try {
-				const artistIds = stats.topArtists.map((a) => a.id)
-				const artistImages = artistIds
-					.map((id) => artists.get(id)?.images?.[0]?.url)
-					.filter((url) => url !== undefined)
-				setArtistImages(new Map(artistImages.map((url) => [url, url])))
-			} catch (error) {
-				console.error("Error fetching artist images:", error)
-			}
-		}
-
-		fetchArtistImages()
-	}, [stats.topArtists, artists.get])
+export default function Dashboard({ stats }: DashboardProps) {
 
 	return (
 		<div className="space-y-6">
@@ -244,13 +113,6 @@ export default function Dashboard({ trackGroups, artists }: DashboardProps) {
 									<div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
 										{index + 1}
 									</div>
-									{artistImages.get(artist.id) && (
-										<img
-											src={artistImages.get(artist.id)}
-											alt={artist.name}
-											className="h-10 w-10 rounded-full object-cover"
-										/>
-									)}
 									<div className="space-y-1">
 										<p className="text-sm font-medium leading-none">
 											{artist.name}

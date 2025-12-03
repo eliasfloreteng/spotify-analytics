@@ -9,6 +9,15 @@ import {
 	groupSimilarTracks,
 } from "@/lib/song-deduplication"
 import SpotifyAnalytics from "@/components/spotify-analytics"
+import {
+	calculateDashboardStats,
+	calculateArtistStats,
+	calculateAlbumStats,
+	calculatePlaylistStats,
+	calculateTimelineStats,
+	calculateWeeklyActivityData,
+	calculateGenreData,
+} from "@/lib/analytics-data"
 
 export default async function HomePage() {
 	const spotify = await getSpotifyClient()
@@ -40,11 +49,19 @@ export default async function HomePage() {
 		...playlistSongs,
 	] satisfies CombinedTrack[]
 
-	// console.log(combinedTracks.length)
-
 	const groups = groupSimilarTracks(combinedTracks)
 
-	// console.log(groups.length)
+	// Create artist map
+	const artistMap = new Map(artists.map((artist) => [artist.id, artist]))
+
+	// Pre-compute all data transformations
+	const dashboardStats = calculateDashboardStats(groups, artistMap)
+	const artistStats = calculateArtistStats(groups, artistMap)
+	const albumStats = calculateAlbumStats(groups)
+	const playlistStats = calculatePlaylistStats(groups)
+	const timelineStats = calculateTimelineStats(groups)
+	const weeklyActivityData = calculateWeeklyActivityData(groups)
+	const genreData = calculateGenreData(groups, artistMap)
 
 	return (
 		<div>
@@ -57,7 +74,13 @@ export default async function HomePage() {
 			<SpotifyAnalytics
 				groups={groups}
 				combinedTracks={combinedTracks}
-				artists={artists}
+				dashboardStats={dashboardStats}
+				artistStats={artistStats}
+				albumStats={albumStats}
+				playlistStats={playlistStats}
+				timelineStats={timelineStats}
+				weeklyActivityData={weeklyActivityData}
+				genreData={genreData}
 			/>
 		</div>
 	)

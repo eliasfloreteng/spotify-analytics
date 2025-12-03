@@ -15,116 +15,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { TrackGroup } from "@/lib/song-deduplication"
+import type { WeeklyActivityData, DayData } from "@/lib/analytics-data"
 
 interface WeeklyActivityGraphProps {
-  trackGroups: TrackGroup[]
-}
-
-interface DayData {
-  date: Date
-  count: number
-  level: number
+  weeklyActivityData: WeeklyActivityData
 }
 
 export default function WeeklyActivityGraph({
-  trackGroups,
+  weeklyActivityData,
 }: WeeklyActivityGraphProps) {
   const [hoveredDay, setHoveredDay] = useState<DayData | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
 
-  const { availableYears, dailyDataByYear } = useMemo(() => {
-    const dayCounts = new Map<string, number>()
-
-    // Count tracks per day
-    trackGroups.forEach((group) => {
-      group.tracks.forEach((track) => {
-        const date = new Date(track.added_at)
-        const dayKey = date.toISOString().split("T")[0]
-        dayCounts.set(dayKey, (dayCounts.get(dayKey) || 0) + 1)
-      })
-    })
-
-    // Find date range
-    const allDates = trackGroups.flatMap((group) =>
-      group.tracks.map((track) => new Date(track.added_at)),
-    )
-
-    if (allDates.length === 0) {
-      return {
-        availableYears: [],
-        dailyDataByYear: new Map<number, DayData[]>(),
-      }
-    }
-
-    const oldestDate = new Date(Math.min(...allDates.map((d) => d.getTime())))
-    const newestDate = new Date(Math.max(...allDates.map((d) => d.getTime())))
-
-    // Get all years in range
-    const years: number[] = []
-    for (
-      let year = oldestDate.getFullYear();
-      year <= newestDate.getFullYear();
-      year++
-    ) {
-      years.push(year)
-    }
-
-    // Generate daily data for each year with per-year color scaling
-    const dataByYear = new Map<number, DayData[]>()
-
-    years.forEach((year) => {
-      const yearStart = new Date(year, 0, 1)
-      const yearEnd = new Date(year, 11, 31)
-      const days: DayData[] = []
-
-      const currentDate = new Date(yearStart)
-      while (currentDate <= yearEnd) {
-        const dayKey = currentDate.toISOString().split("T")[0]
-        const count = dayCounts.get(dayKey) || 0
-
-        days.push({
-          date: new Date(currentDate),
-          count,
-          level: 0, // Will be calculated after we have all days for this year
-        })
-
-        currentDate.setDate(currentDate.getDate() + 1)
-      }
-
-      // Calculate levels for this year using 90th percentile to handle outliers
-      const yearCounts = days.map((d) => d.count).filter((c) => c > 0)
-
-      if (yearCounts.length > 0) {
-        yearCounts.sort((a, b) => a - b)
-        const percentile90Index = Math.floor(yearCounts.length * 0.9)
-        const max =
-          yearCounts[percentile90Index] || yearCounts[yearCounts.length - 1]
-
-        // Assign levels based on this year's 90th percentile
-        days.forEach((day: DayData) => {
-          if (day.count === 0) {
-            day.level = 0
-          } else if (day.count <= max * 0.25) {
-            day.level = 1
-          } else if (day.count <= max * 0.5) {
-            day.level = 2
-          } else if (day.count <= max * 0.75) {
-            day.level = 3
-          } else {
-            day.level = 4
-          }
-        })
-      }
-
-      dataByYear.set(year, days)
-    })
-
-    return {
-      availableYears: years.sort((a, b) => b - a),
-      dailyDataByYear: dataByYear,
-    }
-  }, [trackGroups])
+  const { availableYears, dailyDataByYear } = weeklyActivityData
 
   const [selectedYear, setSelectedYear] = useState<string>(() =>
     availableYears.length > 0 ? availableYears[0].toString() : "",

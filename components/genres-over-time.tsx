@@ -1,6 +1,5 @@
 "use client"
 
-import { useMemo } from "react"
 import {
   Card,
   CardContent,
@@ -18,19 +17,10 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts"
-import type { TrackGroup } from "@/lib/song-deduplication"
-import type { Artist } from "@spotify/web-api-ts-sdk"
-import {
-  mapTrackGroupsToGenres,
-  calculateGenreStats,
-  calculateGenreTimeline,
-  getTopGenres,
-  type GenreStats,
-} from "@/lib/genre-analysis"
+import type { GenreData } from "@/lib/analytics-data"
 
 interface GenresOverTimeProps {
-  trackGroups: TrackGroup[]
-  artists: Map<string, Artist>
+  genreData: GenreData
 }
 
 // Color palette for top genres
@@ -104,93 +94,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   )
 }
 
-export default function GenresOverTime({
-  trackGroups,
-  artists,
-}: GenresOverTimeProps) {
-  const { genreStats, timelineData, topGenres } = useMemo(() => {
-    // Map track groups to genres
-    const trackGroupsWithGenres = mapTrackGroupsToGenres(trackGroups, artists)
-
-    // Calculate statistics
-    const stats = calculateGenreStats(trackGroupsWithGenres)
-    const timeline = calculateGenreTimeline(trackGroupsWithGenres)
-    const top = getTopGenres(stats, 10)
-
-    // Group timeline data by quarters
-    const quarterlyData = new Map<string, Map<string, number>>()
-
-    timeline.forEach((item) => {
-      const date = new Date(item.month + "-01")
-      const year = date.getFullYear()
-      const month = date.getMonth()
-      const quarter = Math.floor(month / 3) + 1
-      const quarterKey = `Q${quarter} ${year}`
-
-      if (!quarterlyData.has(quarterKey)) {
-        quarterlyData.set(quarterKey, new Map())
-      }
-
-      const quarterGenres = quarterlyData.get(quarterKey)!
-
-      // Aggregate genre counts for this quarter
-      item.genres.forEach((count, genre) => {
-        quarterGenres.set(genre, (quarterGenres.get(genre) || 0) + count)
-      })
-    })
-
-    // Format timeline data for chart with relative percentages
-    const formattedTimeline = Array.from(quarterlyData.entries()).map(
-      ([quarter, genres]) => {
-        const dataPoint: any = {
-          month: quarter,
-        }
-
-        // Calculate total for this quarter
-        let quarterTotal = 0
-        top.forEach((genre) => {
-          quarterTotal += genres.get(genre.genre) || 0
-        })
-
-        // Add top genres as percentages and store actual values
-        top.forEach((genre) => {
-          const actualValue = genres.get(genre.genre) || 0
-          const percentage =
-            quarterTotal > 0 ? (actualValue / quarterTotal) * 100 : 0
-          dataPoint[genre.genre] = percentage
-          dataPoint[`${genre.genre}_actual`] = actualValue
-        })
-
-        return dataPoint
-      },
-    )
-
-    return {
-      genreStats: stats,
-      timelineData: formattedTimeline,
-      topGenres: top,
-    }
-  }, [trackGroups, artists])
-
-  const overallStats = useMemo(() => {
-    const totalGenres = genreStats.length
-    const topGenre = genreStats[0]
-    const totalTracks = trackGroups.length
-
-    // Calculate average genres per track
-    const trackGroupsWithGenres = mapTrackGroupsToGenres(trackGroups, artists)
-    const totalGenreAssignments = trackGroupsWithGenres.reduce(
-      (sum, group) => sum + group.genres.length,
-      0,
-    )
-    const avgGenresPerTrack = totalGenreAssignments / totalTracks
-
-    return {
-      totalGenres,
-      topGenre,
-      avgGenresPerTrack: avgGenresPerTrack.toFixed(1),
-    }
-  }, [genreStats, trackGroups, artists])
+export default function GenresOverTime({ genreData }: GenresOverTimeProps) {
+  const { genreStats, timelineData, topGenres, overallStats } = genreData
 
   return (
     <div className="space-y-4">

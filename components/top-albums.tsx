@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
-import type { TrackGroup } from "@/lib/song-deduplication"
+import type { AlbumStats } from "@/lib/analytics-data"
 import {
   Dialog,
   DialogContent,
@@ -21,41 +21,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Track } from "@spotify/web-api-ts-sdk"
 
 interface TopAlbumsProps {
-  trackGroups: TrackGroup[]
+  albumStats: AlbumStats[]
 }
 
-export default function TopAlbums({ trackGroups }: TopAlbumsProps) {
+export default function TopAlbums({ albumStats }: TopAlbumsProps) {
   const [searchQuery, setSearchQuery] = useState("")
-
-  const albumStats = useMemo(() => {
-    const stats = new Map<
-      string,
-      { album: Track["album"]; count: number; tracks: Track[] }
-    >()
-
-    // Use only the representative track from each group (deduplicated)
-    trackGroups.forEach((group) => {
-      const track = group.representativeTrack
-      const key = `${track.album.id}-${track.album.name}`
-      const existing = stats.get(key)
-
-      if (existing) {
-        existing.count++
-        existing.tracks.push(track)
-      } else {
-        stats.set(key, {
-          album: track.album,
-          count: 1,
-          tracks: [track],
-        })
-      }
-    })
-
-    return Array.from(stats.values()).sort((a, b) => b.count - a.count)
-  }, [trackGroups])
 
   const filteredAlbums = useMemo(() => {
     if (!searchQuery) return albumStats

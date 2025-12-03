@@ -16,22 +16,37 @@ import MostPlaylistedSongs from "@/components/most-playlisted-songs"
 import AddedOverTimeHeatmap from "@/components/added-over-time-heatmap"
 import GenresOverTime from "@/components/genres-over-time"
 import type { CombinedTrack, TrackGroup } from "@/lib/song-deduplication"
-import type { Artist } from "@spotify/web-api-ts-sdk"
+import type {
+	DashboardStats,
+	ArtistStats,
+	AlbumStats,
+	PlaylistSongStats,
+	TimelineStats,
+	WeeklyActivityData,
+	GenreData,
+} from "@/lib/analytics-data"
 
 export default function SpotifyAnalytics({
 	groups,
 	combinedTracks: songs,
-	artists,
+	dashboardStats,
+	artistStats,
+	albumStats,
+	playlistStats,
+	timelineStats,
+	weeklyActivityData,
+	genreData,
 }: {
 	groups: TrackGroup[]
 	combinedTracks: CombinedTrack[]
-	artists: Artist[]
+	dashboardStats: DashboardStats
+	artistStats: ArtistStats[]
+	albumStats: AlbumStats[]
+	playlistStats: PlaylistSongStats[]
+	timelineStats: TimelineStats
+	weeklyActivityData: WeeklyActivityData
+	genreData: GenreData
 }) {
-	const artistMap = new Map<string, Artist>()
-	for (const artist of artists) {
-		artistMap.set(artist.id, artist)
-	}
-
 	return (
 		<div className="min-h-screen bg-background">
 			<div className="container mx-auto px-4 py-8">
@@ -75,27 +90,30 @@ export default function SpotifyAnalytics({
 					</TabsList>
 
 					<TabsContent value="dashboard" className="space-y-4">
-						<Dashboard trackGroups={groups} artists={artistMap} />
+						<Dashboard stats={dashboardStats} />
 					</TabsContent>
 
 					<TabsContent value="albums" className="space-y-4">
-						<TopAlbums trackGroups={groups} />
+						<TopAlbums albumStats={albumStats} />
 					</TabsContent>
 
 					<TabsContent value="artists" className="space-y-4">
-						<TopArtists trackGroups={groups} artists={artistMap} />
+						<TopArtists artistStats={artistStats} />
 					</TabsContent>
 
 					<TabsContent value="playlisted" className="space-y-4">
-						<MostPlaylistedSongs trackGroups={groups} />
+						<MostPlaylistedSongs playlistStats={playlistStats} />
 					</TabsContent>
 
 					<TabsContent value="genres" className="space-y-4">
-						<GenresOverTime trackGroups={groups} artists={artistMap} />
+						<GenresOverTime genreData={genreData} />
 					</TabsContent>
 
 					<TabsContent value="timeline" className="space-y-4">
-						<AddedOverTimeHeatmap trackGroups={groups} />
+						<AddedOverTimeHeatmap
+							timelineStats={timelineStats}
+							weeklyActivityData={weeklyActivityData}
+						/>
 					</TabsContent>
 				</Tabs>
 			</div>

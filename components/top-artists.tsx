@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import {
 	Card,
 	CardContent,
@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
-import type { TrackGroup } from "@/lib/song-deduplication"
+import type { ArtistStats } from "@/lib/analytics-data"
 import {
 	Dialog,
 	DialogContent,
@@ -21,46 +21,13 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import type { Artist, Track } from "@spotify/web-api-ts-sdk"
 
 interface TopArtistsProps {
-	trackGroups: TrackGroup[]
-	artists: Map<string, Artist>
+	artistStats: ArtistStats[]
 }
 
-export default function TopArtists({ trackGroups, artists }: TopArtistsProps) {
+export default function TopArtists({ artistStats }: TopArtistsProps) {
 	const [searchQuery, setSearchQuery] = useState("")
-	const [artistImages, setArtistImages] = useState<Map<string, string>>(
-		new Map(),
-	)
-
-	const artistStats = useMemo(() => {
-		const stats = new Map<
-			string,
-			{ name: string; id: string; count: number; tracks: Track[] }
-		>()
-
-		// Use only the representative track from each group (deduplicated)
-		trackGroups.forEach((group) => {
-			const track = group.representativeTrack
-			track.artists.forEach((artist) => {
-				const existing = stats.get(artist.id)
-				if (existing) {
-					existing.count++
-					existing.tracks.push(track)
-				} else {
-					stats.set(artist.id, {
-						name: artist.name,
-						id: artist.id,
-						count: 1,
-						tracks: [track],
-					})
-				}
-			})
-		})
-
-		return Array.from(stats.values()).sort((a, b) => b.count - a.count)
-	}, [trackGroups])
 
 	const filteredArtists = useMemo(() => {
 		if (!searchQuery) return artistStats
@@ -68,32 +35,6 @@ export default function TopArtists({ trackGroups, artists }: TopArtistsProps) {
 			artist.name.toLowerCase().includes(searchQuery.toLowerCase()),
 		)
 	}, [artistStats, searchQuery])
-
-	// Fetch artist images for top 50 visible artists
-	useEffect(() => {
-		if (filteredArtists.length === 0) return
-
-		const fetchArtistImages = async () => {
-			try {
-				// Fetch in batches of 50 (Spotify API limit)
-				const artistIds = filteredArtists.slice(0, 50).map((a) => a.id)
-				const artistImages = artistIds.map(
-					(id) => artists.get(id)?.images?.[0]?.url,
-				)
-				setArtistImages(
-					new Map(
-						artistImages
-							.filter((url) => url !== undefined)
-							.map((url) => [url, url]),
-					),
-				)
-			} catch (error) {
-				console.error("Error fetching artist images:", error)
-			}
-		}
-
-		fetchArtistImages()
-	}, [filteredArtists, artists.get])
 
 	return (
 		<div className="space-y-4">
@@ -128,9 +69,9 @@ export default function TopArtists({ trackGroups, artists }: TopArtistsProps) {
 									<span className="text-2xl font-bold text-muted-foreground">
 										{index + 1}
 									</span>
-									{artistImages.get(artist.id) && (
+									{artist.imageUrl && (
 										<img
-											src={artistImages.get(artist.id)}
+											src={artist.imageUrl}
 											alt={artist.name}
 											className="h-16 w-16 rounded-full object-cover"
 										/>

@@ -11,50 +11,16 @@ import {
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Search } from "lucide-react"
-import type { TrackGroup } from "@/lib/song-deduplication"
+import type { PlaylistSongStats } from "@/lib/analytics-data"
 
 interface MostPlaylistedSongsProps {
-  trackGroups: TrackGroup[]
+  playlistStats: PlaylistSongStats[]
 }
 
 export default function MostPlaylistedSongs({
-  trackGroups,
+  playlistStats,
 }: MostPlaylistedSongsProps) {
   const [searchQuery, setSearchQuery] = useState("")
-
-  const playlistStats = useMemo(() => {
-    // Count how many times each song appears across different sources
-    const stats = trackGroups
-      .map((group) => {
-        // Count instances in playlists (not liked songs)
-        const playlistInstances = group.tracks.filter(
-          (t) => t.source === "playlist",
-        )
-        const uniquePlaylists = new Set(
-          playlistInstances.map((t) => t.playlist.id),
-        )
-
-        return {
-          group,
-          track: group.representativeTrack,
-          totalInstances: group.tracks.length,
-          playlistCount: uniquePlaylists.size,
-          playlists: Array.from(uniquePlaylists)
-            .map((id) => {
-              const instance = playlistInstances.find(
-                (t) => t.playlist.id === id,
-              )
-              return instance?.playlist
-            })
-            .filter(Boolean),
-          isInLikedSongs: group.tracks.some((t) => t.source === "liked"),
-        }
-      })
-      .filter((item) => item.playlistCount > 0) // Only show songs that are in at least one playlist
-      .sort((a, b) => b.playlistCount - a.playlistCount)
-
-    return stats
-  }, [trackGroups])
 
   const filteredSongs = useMemo(() => {
     if (!searchQuery) return playlistStats

@@ -2,7 +2,11 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Music2, Disc, Radio, Sparkles } from "lucide-react"
-import { FetchProgress } from "@/lib/spotify-data-fetcher"
+
+interface FetchProgress {
+  phase: string
+  message: string
+}
 
 interface LoadingIndicatorProps {
   progress: number

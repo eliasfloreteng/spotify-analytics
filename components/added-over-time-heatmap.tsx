@@ -1,6 +1,5 @@
 "use client"
 
-import { useMemo } from "react"
 import {
   Card,
   CardContent,
@@ -17,127 +16,19 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts"
-import type { TrackGroup } from "@/lib/song-deduplication"
+import type { TimelineStats, WeeklyActivityData } from "@/lib/analytics-data"
 import WeeklyActivityGraph from "@/components/weekly-activity-graph"
 
 interface AddedOverTimeHeatmapProps {
-  trackGroups: TrackGroup[]
+  timelineStats: TimelineStats
+  weeklyActivityData: WeeklyActivityData
 }
 
 export default function AddedOverTimeHeatmap({
-  trackGroups,
+  timelineStats,
+  weeklyActivityData,
 }: AddedOverTimeHeatmapProps) {
-  const { timelineData, yAxisMax } = useMemo(() => {
-    const monthCounts = new Map<string, number>()
-
-    // Use all tracks (not deduplicated) to show when songs were added
-    trackGroups.forEach((group) => {
-      group.tracks.forEach((track) => {
-        const date = new Date(track.added_at)
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
-        monthCounts.set(monthKey, (monthCounts.get(monthKey) || 0) + 1)
-      })
-    })
-
-    // Convert to array and sort by date
-    const data = Array.from(monthCounts.entries())
-      .map(([month, count]) => ({
-        month,
-        count,
-        date: new Date(month + "-01"),
-      }))
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
-
-    // Calculate median for Y-axis max
-    const counts = data.map((d) => d.count).sort((a, b) => a - b)
-    const median =
-      counts.length === 0
-        ? 0
-        : counts.length % 2 === 0
-          ? (counts[counts.length / 2 - 1] + counts[counts.length / 2]) / 2
-          : counts[Math.floor(counts.length / 2)]
-
-    const yAxisMax = median * 3.5
-
-    // Format data
-    const formattedData = data.map(({ month, count }) => ({
-      month: new Date(month + "-01").toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-      }),
-      count,
-    }))
-
-    return { timelineData: formattedData, yAxisMax }
-  }, [trackGroups])
-
-  const stats = useMemo(() => {
-    const allDates = trackGroups.flatMap((group) =>
-      group.tracks.map((track) => new Date(track.added_at)),
-    )
-
-    if (allDates.length === 0) {
-      return {
-        oldestDate: null,
-        newestDate: null,
-        totalMonths: 0,
-        avgPerMonth: 0,
-        peakMonth: null,
-        peakCount: 0,
-      }
-    }
-
-    const oldest = new Date(Math.min(...allDates.map((d) => d.getTime())))
-    const newest = new Date(Math.max(...allDates.map((d) => d.getTime())))
-
-    const monthsDiff =
-      (newest.getFullYear() - oldest.getFullYear()) * 12 +
-      (newest.getMonth() - oldest.getMonth()) +
-      1
-
-    const avgPerMonth = Math.round(trackGroups.length / monthsDiff)
-
-    // Find peak month
-    const monthCounts = new Map<string, number>()
-    trackGroups.forEach((group) => {
-      group.tracks.forEach((track) => {
-        const date = new Date(track.added_at)
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
-        monthCounts.set(monthKey, (monthCounts.get(monthKey) || 0) + 1)
-      })
-    })
-
-    let peakMonth = ""
-    let peakCount = 0
-    monthCounts.forEach((count, month) => {
-      if (count > peakCount) {
-        peakCount = count
-        peakMonth = month
-      }
-    })
-
-    const peakDate = peakMonth
-      ? new Date(peakMonth + "-01").toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-        })
-      : null
-
-    return {
-      oldestDate: oldest.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-      }),
-      newestDate: newest.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-      }),
-      totalMonths: monthsDiff,
-      avgPerMonth,
-      peakMonth: peakDate,
-      peakCount,
-    }
-  }, [trackGroups])
+  const { timelineData, yAxisMax, stats } = timelineStats
 
   return (
     <div className="space-y-4">
@@ -204,7 +95,7 @@ export default function AddedOverTimeHeatmap({
         </Card>
       </div>
 
-      <WeeklyActivityGraph trackGroups={trackGroups} />
+      <WeeklyActivityGraph weeklyActivityData={weeklyActivityData} />
 
       <Card>
         <CardHeader>
