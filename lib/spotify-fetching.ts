@@ -19,6 +19,18 @@ const MAX_ALBUMS_PER_REQUEST = 20
 const MAX_ARTISTS_PER_REQUEST = 50
 const CACHE_FILE_PATH = join(process.cwd(), "spotify-data-cache.json")
 
+function createEmptyPage<T>(): Page<T> {
+	return {
+		href: "",
+		limit: 0,
+		next: null,
+		offset: 0,
+		previous: null,
+		total: 0,
+		items: [],
+	}
+}
+
 export interface SpotifyData {
 	user: UserProfile
 	savedTracks: SavedTrack[]
@@ -40,18 +52,21 @@ export async function fetchSpotifyData(
 	spotify: SpotifyApi,
 	onProgress?: (completed: number, total: number) => void,
 ) {
-	// Check if cache file exists and return cached data if available
 	try {
 		await access(CACHE_FILE_PATH)
 		const cachedData = await readFile(CACHE_FILE_PATH, "utf-8")
 		return JSON.parse(cachedData) as SpotifyData
-	} catch {
-		// Cache doesn't exist, proceed with fetching
+	} catch (error) {
+		console.error("Error accessing cache file:", error)
 	}
 
 	const queue = new PQueue({ concurrency: 4, interval: 1000, intervalCap: 4 })
 	let completedRequests = 0
 	let totalRequests = 0
+
+	queue.on("error", (error) => {
+		console.error("Queue error:", error)
+	})
 
 	if (onProgress) {
 		queue.on("add", () => {
@@ -62,6 +77,11 @@ export async function fetchSpotifyData(
 			completedRequests++
 			onProgress(completedRequests, totalRequests)
 		})
+
+		queue.on("error", () => {
+			completedRequests++
+			onProgress(completedRequests, totalRequests)
+		})
 	}
 
 	const getUser = async () => {
@@ -69,9 +89,12 @@ export async function fetchSpotifyData(
 	}
 
 	const getSavedTracks = async () => {
-		const initialSavedTracks = await queue.add(() =>
-			spotify.currentUser.tracks.savedTracks(MAX_TRACKS_PER_PAGE, 0),
-		)
+		const initialSavedTracks = await queue
+			.add(() => spotify.currentUser.tracks.savedTracks(MAX_TRACKS_PER_PAGE, 0))
+			.catch((error) => {
+				console.error("Error fetching saved tracks:", error)
+				return createEmptyPage<SavedTrack>()
+			})
 
 		const allSavedTracksPromises: Promise<Page<SavedTrack>>[] = [
 			Promise.resolve(initialSavedTracks),
@@ -83,9 +106,17 @@ export async function fetchSpotifyData(
 			offset += MAX_TRACKS_PER_PAGE
 		) {
 			allSavedTracksPromises.push(
-				queue.add(() =>
-					spotify.currentUser.tracks.savedTracks(MAX_TRACKS_PER_PAGE, offset),
-				),
+				queue
+					.add(() =>
+						spotify.currentUser.tracks.savedTracks(MAX_TRACKS_PER_PAGE, offset),
+					)
+					.catch((error) => {
+						console.error(
+							`Error fetching saved tracks at offset ${offset}:`,
+							error,
+						)
+						return createEmptyPage<SavedTrack>()
+					}),
 			)
 		}
 
@@ -94,15 +125,20 @@ export async function fetchSpotifyData(
 	}
 
 	const getPlaylistTracks = async (playlistId: string) => {
-		const initialPlaylistTracks = await queue.add(() =>
-			spotify.playlists.getPlaylistItems(
-				playlistId,
-				undefined,
-				undefined,
-				MAX_TRACKS_PER_PAGE,
-				0,
-			),
-		)
+		const initialPlaylistTracks = await queue
+			.add(() =>
+				spotify.playlists.getPlaylistItems(
+					playlistId,
+					undefined,
+					undefined,
+					MAX_TRACKS_PER_PAGE,
+					0,
+				),
+			)
+			.catch((error) => {
+				console.error(`Error fetching playlist ${playlistId}:`, error)
+				return createEmptyPage<PlaylistedTrack<Track>>()
+			})
 
 		const allPlaylistTracksPromises: Promise<Page<PlaylistedTrack<Track>>>[] = [
 			Promise.resolve(initialPlaylistTracks),
@@ -113,15 +149,23 @@ export async function fetchSpotifyData(
 			offset += MAX_TRACKS_PER_PAGE
 		) {
 			allPlaylistTracksPromises.push(
-				queue.add(() =>
-					spotify.playlists.getPlaylistItems(
-						playlistId,
-						undefined,
-						undefined,
-						MAX_TRACKS_PER_PAGE,
-						offset,
-					),
-				),
+				queue
+					.add(() =>
+						spotify.playlists.getPlaylistItems(
+							playlistId,
+							undefined,
+							undefined,
+							MAX_TRACKS_PER_PAGE,
+							offset,
+						),
+					)
+					.catch((error) => {
+						console.error(
+							`Error fetching playlist ${playlistId} at offset ${offset}:`,
+							error,
+						)
+						return createEmptyPage<PlaylistedTrack<Track>>()
+					}),
 			)
 		}
 		const allPlaylistTracks = await Promise.all(allPlaylistTracksPromises)
@@ -129,9 +173,14 @@ export async function fetchSpotifyData(
 	}
 
 	const getUserPlaylistsWithTracks = async () => {
-		const initialPlaylistsPage = await queue.add(() =>
-			spotify.currentUser.playlists.playlists(MAX_TRACKS_PER_PAGE, 0),
-		)
+		const initialPlaylistsPage = await queue
+			.add(() =>
+				spotify.currentUser.playlists.playlists(MAX_TRACKS_PER_PAGE, 0),
+			)
+			.catch((error) => {
+				console.error("Error fetching user playlists:", error)
+				return createEmptyPage<SimplifiedPlaylist>()
+			})
 
 		const allTrackPromises: Promise<{
 			playlist: SimplifiedPlaylist
@@ -168,6 +217,13 @@ export async function fetchSpotifyData(
 							)
 						})
 						return page.items
+					})
+					.catch((error) => {
+						console.error(
+							`Error fetching playlists at offset ${offset}:`,
+							error,
+						)
+						return []
 					}),
 			)
 		}
@@ -206,14 +262,22 @@ export async function fetchSpotifyData(
 			offset += MAX_TRACKS_PER_PAGE
 		) {
 			allAlbumTracksPromises.push(
-				queue.add(() =>
-					spotify.albums.tracks(
-						albumId,
-						undefined,
-						MAX_TRACKS_PER_PAGE,
-						offset,
-					),
-				),
+				queue
+					.add(() =>
+						spotify.albums.tracks(
+							albumId,
+							undefined,
+							MAX_TRACKS_PER_PAGE,
+							offset,
+						),
+					)
+					.catch((error) => {
+						console.error(
+							`Error fetching album ${albumId} tracks at offset ${offset}:`,
+							error,
+						)
+						return createEmptyPage<SimplifiedTrack>()
+					}),
 			)
 		}
 
@@ -262,6 +326,10 @@ export async function fetchSpotifyData(
 						}
 					})
 					return albums
+				})
+				.catch((error) => {
+					console.error(`Error fetching albums chunk:`, error)
+					return []
 				}),
 		)
 
@@ -319,6 +387,10 @@ export async function fetchSpotifyData(
 				.add(() => spotify.artists.get(chunk))
 				.then((artists) => {
 					return artists
+				})
+				.catch((error) => {
+					console.error(`Error fetching artists chunk:`, error)
+					return []
 				}),
 		)
 
@@ -338,7 +410,6 @@ export async function fetchSpotifyData(
 		artists,
 	}
 
-	// Save data to cache file
 	await writeFile(CACHE_FILE_PATH, JSON.stringify(data, null, 2), "utf-8")
 
 	return data
