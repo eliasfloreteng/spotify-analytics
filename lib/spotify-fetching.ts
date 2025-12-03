@@ -389,7 +389,7 @@ export async function fetchSpotifyData(
 					return artists
 				})
 				.catch((error) => {
-					console.error(`Error fetching artists chunk:`, error)
+					console.error(`Error fetching artists chunk [${chunk.join(", ")}]:`, error)
 					return []
 				}),
 		)
