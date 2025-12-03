@@ -32,8 +32,12 @@ export default async function HomePage() {
 				`Progress: ${completed}/${total} requests completed ${progress.toFixed(2)}%`,
 			)
 		})
+	const userPlaylists = playlistsWithTracks.filter(
+		(playlist) =>
+			playlist.playlist.owner.id === user.id || playlist.playlist.collaborative,
+	)
 
-	const playlistSongs = playlistsWithTracks.flatMap((playlist) =>
+	const playlistSongs = userPlaylists.flatMap((playlist) =>
 		playlist.tracks.map((track) => ({
 			source: "playlist" as const,
 			playlist: playlist.playlist,
