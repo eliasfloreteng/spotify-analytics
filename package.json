@@ -51,7 +51,6 @@
 		"date-fns": "4.1.0",
 		"embla-carousel-react": "8.5.1",
 		"input-otp": "1.4.1",
-		"ioredis": "^5.8.2",
 		"iron-session": "^8.0.4",
 		"lucide-react": "^0.454.0",
 		"next": "16.0.6",

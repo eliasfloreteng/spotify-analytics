@@ -5,7 +5,6 @@ declare global {
 			SPOTIFY_CLIENT_SECRET: string;
 			SPOTIFY_REDIRECT_URI: string;
 			SESSION_SECRET: string;
-			REDIS_URL: string;
 		}
 	}
 }
