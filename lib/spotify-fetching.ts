@@ -8,6 +8,7 @@ import type {
 	Album,
 	SimplifiedTrack,
 	Artist,
+	UserProfile,
 } from "@spotify/web-api-ts-sdk"
 import PQueue from "p-queue"
 import { readFile, writeFile, access } from "node:fs/promises"
@@ -18,17 +19,50 @@ const MAX_ALBUMS_PER_REQUEST = 20
 const MAX_ARTISTS_PER_REQUEST = 50
 const CACHE_FILE_PATH = join(process.cwd(), "spotify-data-cache.json")
 
-export async function fetchSpotifyData(spotify: SpotifyApi) {
+export interface SpotifyData {
+	user: UserProfile
+	savedTracks: SavedTrack[]
+	playlistsWithTracks: {
+		playlist: SimplifiedPlaylist
+		tracks: PlaylistedTrack<Track>[]
+	}[]
+	albumsWithTracks: {
+		album: Album
+		tracks: SimplifiedTrack[]
+	}[]
+	artists: {
+		artist: Artist
+		tracks: SimplifiedTrack[]
+	}[]
+}
+
+export async function fetchSpotifyData(
+	spotify: SpotifyApi,
+	onProgress?: (completed: number, total: number) => void,
+) {
 	// Check if cache file exists and return cached data if available
 	try {
 		await access(CACHE_FILE_PATH)
 		const cachedData = await readFile(CACHE_FILE_PATH, "utf-8")
-		return JSON.parse(cachedData)
+		return JSON.parse(cachedData) as SpotifyData
 	} catch {
 		// Cache doesn't exist, proceed with fetching
 	}
 
-	const queue = new PQueue({ concurrency: 3, interval: 1000, intervalCap: 3 })
+	const queue = new PQueue({ concurrency: 4, interval: 1000, intervalCap: 4 })
+	let completedRequests = 0
+	let totalRequests = 0
+
+	if (onProgress) {
+		queue.on("add", () => {
+			totalRequests++
+		})
+
+		queue.on("completed", () => {
+			completedRequests++
+			onProgress(completedRequests, totalRequests)
+		})
+	}
 
 	const getUser = async () => {
 		return await queue.add(() => spotify.currentUser.profile())
