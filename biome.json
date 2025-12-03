@@ -29,7 +29,7 @@
 				"useSortedClasses": {
 					"level": "warn",
 					"options": {
-						"functions": ["clsx", "cva", "tw", "tw.*"]
+						"functions": ["clsx", "cva", "cn", "tw", "tw.*"]
 					}
 				}
 			}
