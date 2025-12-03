@@ -328,7 +328,7 @@ export async function fetchSpotifyData(
 					return albums
 				})
 				.catch((error) => {
-					console.error(`Error fetching albums chunk:`, error)
+					console.error(`Error fetching albums chunk [${chunk.join(", ")}]:`, error)
 					return []
 				}),
 		)
