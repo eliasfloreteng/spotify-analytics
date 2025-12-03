@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
 	Card,
@@ -6,16 +6,15 @@ import {
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "@/components/ui/card"
-import { Music, Disc3, ListMusic, TrendingUp } from "lucide-react"
-import type { DashboardStats } from "@/lib/analytics-data"
+} from "@/components/ui/card";
+import { Music, Disc3, ListMusic, TrendingUp } from "lucide-react";
+import type { DashboardStats } from "@/lib/analytics-data";
 
 interface DashboardProps {
-	stats: DashboardStats
+	stats: DashboardStats;
 }
 
 export default function Dashboard({ stats }: DashboardProps) {
-
 	return (
 		<div className="space-y-6">
 			{/* Stats Cards */}
@@ -216,5 +215,5 @@ export default function Dashboard({ stats }: DashboardProps) {
 				</CardContent>
 			</Card>
 		</div>
-	)
+	);
 }

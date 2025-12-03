@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
+import { useState, useMemo } from "react";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Search } from "lucide-react"
-import type { ArtistStats } from "@/lib/analytics-data"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
+import type { ArtistStats } from "@/lib/analytics-data";
 import {
 	Dialog,
 	DialogContent,
@@ -19,22 +19,22 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-} from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface TopArtistsProps {
-	artistStats: ArtistStats[]
+	artistStats: ArtistStats[];
 }
 
 export default function TopArtists({ artistStats }: TopArtistsProps) {
-	const [searchQuery, setSearchQuery] = useState("")
+	const [searchQuery, setSearchQuery] = useState("");
 
 	const filteredArtists = useMemo(() => {
-		if (!searchQuery) return artistStats
+		if (!searchQuery) return artistStats;
 		return artistStats.filter((artist) =>
 			artist.name.toLowerCase().includes(searchQuery.toLowerCase()),
-		)
-	}, [artistStats, searchQuery])
+		);
+	}, [artistStats, searchQuery]);
 
 	return (
 		<div className="space-y-4">
@@ -143,5 +143,5 @@ export default function TopArtists({ artistStats }: TopArtistsProps) {
 				</CardContent>
 			</Card>
 		</div>
-	)
+	);
 }

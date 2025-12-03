@@ -1,14 +1,14 @@
-import { logout, refreshTokensIfNeeded } from "@/lib/spotify-actions"
-import { Button } from "@/components/ui/button"
-import { getSpotifyClient } from "@/lib/spotify"
-import { LogOut } from "lucide-react"
-import Login from "@/components/login"
-import { fetchSpotifyData } from "@/lib/spotify-fetching"
+import { logout, refreshTokensIfNeeded } from "@/lib/spotify-actions";
+import { Button } from "@/components/ui/button";
+import { getSpotifyClient } from "@/lib/spotify";
+import { LogOut } from "lucide-react";
+import Login from "@/components/login";
+import { fetchSpotifyData } from "@/lib/spotify-fetching";
 import {
 	type CombinedTrack,
 	groupSimilarTracks,
-} from "@/lib/song-deduplication"
-import SpotifyAnalytics from "@/components/spotify-analytics"
+} from "@/lib/song-deduplication";
+import SpotifyAnalytics from "@/components/spotify-analytics";
 import {
 	calculateDashboardStats,
 	calculateArtistStats,
@@ -17,27 +17,27 @@ import {
 	calculateTimelineStats,
 	calculateWeeklyActivityData,
 	calculateGenreData,
-} from "@/lib/analytics-data"
+} from "@/lib/analytics-data";
 
 export default async function HomePage() {
-	await refreshTokensIfNeeded()
+	await refreshTokensIfNeeded();
 
-	const spotify = await getSpotifyClient()
+	const spotify = await getSpotifyClient();
 	if (!spotify) {
-		return <Login />
+		return <Login />;
 	}
 
 	const { user, savedTracks, playlistsWithTracks, albumsWithTracks, artists } =
 		await fetchSpotifyData(spotify, (completed, total) => {
-			const progress = (completed / total) * 100
+			const progress = (completed / total) * 100;
 			console.log(
 				`Progress: ${completed}/${total} requests completed ${progress.toFixed(2)}%`,
-			)
-		})
+			);
+		});
 	const userPlaylists = playlistsWithTracks.filter(
 		(playlist) =>
 			playlist.playlist.owner.id === user.id || playlist.playlist.collaborative,
-	)
+	);
 
 	const playlistSongs = userPlaylists.flatMap((playlist) =>
 		playlist.tracks.map((track) => ({
@@ -45,7 +45,7 @@ export default async function HomePage() {
 			playlist: playlist.playlist,
 			...track,
 		})),
-	)
+	);
 
 	const combinedTracks = [
 		...savedTracks.map((track) => ({
@@ -53,21 +53,21 @@ export default async function HomePage() {
 			...track,
 		})),
 		...playlistSongs,
-	] satisfies CombinedTrack[]
+	] satisfies CombinedTrack[];
 
-	const groups = groupSimilarTracks(combinedTracks)
+	const groups = groupSimilarTracks(combinedTracks);
 
 	// Create artist map
-	const artistMap = new Map(artists.map((artist) => [artist.id, artist]))
+	const artistMap = new Map(artists.map((artist) => [artist.id, artist]));
 
 	// Pre-compute all data transformations
-	const dashboardStats = calculateDashboardStats(groups, artistMap)
-	const artistStats = calculateArtistStats(groups, artistMap)
-	const albumStats = calculateAlbumStats(groups)
-	const playlistStats = calculatePlaylistStats(groups)
-	const timelineStats = calculateTimelineStats(groups)
-	const weeklyActivityData = calculateWeeklyActivityData(groups)
-	const genreData = calculateGenreData(groups, artistMap)
+	const dashboardStats = calculateDashboardStats(groups, artistMap);
+	const artistStats = calculateArtistStats(groups, artistMap);
+	const albumStats = calculateAlbumStats(groups);
+	const playlistStats = calculatePlaylistStats(groups);
+	const timelineStats = calculateTimelineStats(groups);
+	const weeklyActivityData = calculateWeeklyActivityData(groups);
+	const genreData = calculateGenreData(groups, artistMap);
 
 	return (
 		<div>
@@ -89,5 +89,5 @@ export default async function HomePage() {
 				genreData={genreData}
 			/>
 		</div>
-	)
+	);
 }

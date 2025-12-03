@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
 	RefreshCw,
 	Music,
@@ -8,14 +8,14 @@ import {
 	ListMusic,
 	Calendar,
 	Radio,
-} from "lucide-react"
-import Dashboard from "@/components/dashboard"
-import TopArtists from "@/components/top-artists"
-import TopAlbums from "@/components/top-albums"
-import MostPlaylistedSongs from "@/components/most-playlisted-songs"
-import AddedOverTimeHeatmap from "@/components/added-over-time-heatmap"
-import GenresOverTime from "@/components/genres-over-time"
-import type { CombinedTrack, TrackGroup } from "@/lib/song-deduplication"
+} from "lucide-react";
+import Dashboard from "@/components/dashboard";
+import TopArtists from "@/components/top-artists";
+import TopAlbums from "@/components/top-albums";
+import MostPlaylistedSongs from "@/components/most-playlisted-songs";
+import AddedOverTimeHeatmap from "@/components/added-over-time-heatmap";
+import GenresOverTime from "@/components/genres-over-time";
+import type { CombinedTrack, TrackGroup } from "@/lib/song-deduplication";
 import type {
 	DashboardStats,
 	ArtistStats,
@@ -24,7 +24,7 @@ import type {
 	TimelineStats,
 	WeeklyActivityData,
 	GenreData,
-} from "@/lib/analytics-data"
+} from "@/lib/analytics-data";
 
 export default function SpotifyAnalytics({
 	groups,
@@ -37,15 +37,15 @@ export default function SpotifyAnalytics({
 	weeklyActivityData,
 	genreData,
 }: {
-	groups: TrackGroup[]
-	combinedTracks: CombinedTrack[]
-	dashboardStats: DashboardStats
-	artistStats: ArtistStats[]
-	albumStats: AlbumStats[]
-	playlistStats: PlaylistSongStats[]
-	timelineStats: TimelineStats
-	weeklyActivityData: WeeklyActivityData
-	genreData: GenreData
+	groups: TrackGroup[];
+	combinedTracks: CombinedTrack[];
+	dashboardStats: DashboardStats;
+	artistStats: ArtistStats[];
+	albumStats: AlbumStats[];
+	playlistStats: PlaylistSongStats[];
+	timelineStats: TimelineStats;
+	weeklyActivityData: WeeklyActivityData;
+	genreData: GenreData;
 }) {
 	return (
 		<div className="min-h-screen bg-background">
@@ -118,5 +118,5 @@ export default function SpotifyAnalytics({
 				</Tabs>
 			</div>
 		</div>
-	)
+	);
 }

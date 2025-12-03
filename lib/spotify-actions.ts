@@ -1,12 +1,12 @@
-"use server"
+"use server";
 
-import { redirect } from "next/navigation"
-import { clearSession, getSession, setTokens, SPOTIFY_SCOPES } from "./spotify"
+import { redirect } from "next/navigation";
+import { clearSession, getSession, setTokens, SPOTIFY_SCOPES } from "./spotify";
 
 interface SpotifyTokens {
-	access_token: string
-	refresh_token: string
-	expires_at: number
+	access_token: string;
+	refresh_token: string;
+	expires_at: number;
 }
 
 async function refreshTokens(
@@ -24,41 +24,41 @@ async function refreshTokens(
 			grant_type: "refresh_token",
 			refresh_token: refreshToken,
 		}),
-	})
+	});
 
-	if (!res.ok) return null
-	const data = await res.json()
+	if (!res.ok) return null;
+	const data = await res.json();
 
 	return {
 		access_token: data.access_token,
 		refresh_token: data.refresh_token ?? refreshToken,
 		expires_at: Date.now() + data.expires_in * 1000,
-	}
+	};
 }
 
 export async function refreshTokensIfNeeded(): Promise<boolean> {
-	const session = await getSession()
-	const tokens = session.spotify
+	const session = await getSession();
+	const tokens = session.spotify;
 
-	if (!tokens) return false
+	if (!tokens) return false;
 
 	if (tokens.expires_at > Date.now() + 5 * 60 * 1000) {
-		return true
+		return true;
 	}
 
-	const refreshed = await refreshTokens(tokens.refresh_token)
+	const refreshed = await refreshTokens(tokens.refresh_token);
 	if (!refreshed) {
-		await clearSession()
-		return false
+		await clearSession();
+		return false;
 	}
 
-	await setTokens(refreshed)
-	return true
+	await setTokens(refreshed);
+	return true;
 }
 
 export async function isAuthenticated(): Promise<boolean> {
-	const session = await getSession()
-	return !!session.spotify
+	const session = await getSession();
+	return !!session.spotify;
 }
 
 export async function login() {
@@ -67,12 +67,12 @@ export async function login() {
 		response_type: "code",
 		redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
 		scope: SPOTIFY_SCOPES.join(" "),
-	})
+	});
 
-	return redirect(`https://accounts.spotify.com/authorize?${params}`)
+	return redirect(`https://accounts.spotify.com/authorize?${params}`);
 }
 
 export async function logout() {
-	await clearSession()
-	redirect("/")
+	await clearSession();
+	redirect("/");
 }

@@ -1,13 +1,13 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
 	CardDescription,
-} from "@/components/ui/card"
-import SpotifyLogo from "@/components/spotify-logo"
-import { login } from "@/lib/spotify-actions"
+} from "@/components/ui/card";
+import SpotifyLogo from "@/components/spotify-logo";
+import { login } from "@/lib/spotify-actions";
 
 export default function Login() {
 	return (
@@ -34,5 +34,5 @@ export default function Login() {
 				</CardContent>
 			</Card>
 		</div>
-	)
+	);
 }
