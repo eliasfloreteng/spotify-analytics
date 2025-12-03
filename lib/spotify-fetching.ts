@@ -186,7 +186,10 @@ export async function fetchSpotifyData(
 
 	const savedTrackAlbumIds = savedTracks.map((track) => track.track.album.id)
 	const playlistTrackAlbumIds = playlistsWithTracks.flatMap((playlist) =>
-		playlist.tracks.map((track) => track.track.album.id),
+		playlist.tracks
+			// Track can apparently be null
+			.map((track) => (track.track ? track.track.album.id : null))
+			.filter((id) => id !== null),
 	)
 
 	const allAlbumIds = new Set([...savedTrackAlbumIds, ...playlistTrackAlbumIds])
