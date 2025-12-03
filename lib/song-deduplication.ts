@@ -1,29 +1,39 @@
-import type { Track } from "@spotify/web-api-ts-sdk";
-import type { CombinedTrack } from "./spotify-data-fetcher";
+import type {
+	PlaylistedTrack,
+	SavedTrack,
+	SimplifiedPlaylist,
+	Track,
+} from "@spotify/web-api-ts-sdk"
 
-/**
- * Result type for grouped tracks
- */
+export type CombinedTrack =
+	| ({
+			source: "liked"
+	  } & SavedTrack)
+	| ({
+			source: "playlist"
+			playlist: SimplifiedPlaylist
+	  } & PlaylistedTrack<Track>)
+
 export interface TrackGroup {
-	tracks: CombinedTrack[];
-	representativeTrack: Track;
+	tracks: CombinedTrack[]
+	representativeTrack: Track
 	matchReasons: {
-		hasStrictMatches: boolean;
-		hasFuzzyMatches: boolean;
-		isSingleTrack: boolean;
-	};
+		hasStrictMatches: boolean
+		hasFuzzyMatches: boolean
+		isSingleTrack: boolean
+	}
 }
 
 /**
  * Union-Find (Disjoint Set Union) data structure for efficient grouping
  */
 class UnionFind {
-	private parent: number[];
-	private rank: number[];
+	private parent: number[]
+	private rank: number[]
 
 	constructor(size: number) {
-		this.parent = Array.from({ length: size }, (_, i) => i);
-		this.rank = Array(size).fill(0);
+		this.parent = Array.from({ length: size }, (_, i) => i)
+		this.rank = Array(size).fill(0)
 	}
 
 	/**
@@ -31,28 +41,28 @@ class UnionFind {
 	 */
 	find(x: number): number {
 		if (this.parent[x] !== x) {
-			this.parent[x] = this.find(this.parent[x]); // Path compression
+			this.parent[x] = this.find(this.parent[x]) // Path compression
 		}
-		return this.parent[x];
+		return this.parent[x]
 	}
 
 	/**
 	 * Union two sets containing x and y (by rank)
 	 */
 	union(x: number, y: number): void {
-		const rootX = this.find(x);
-		const rootY = this.find(y);
+		const rootX = this.find(x)
+		const rootY = this.find(y)
 
-		if (rootX === rootY) return;
+		if (rootX === rootY) return
 
 		// Union by rank
 		if (this.rank[rootX] < this.rank[rootY]) {
-			this.parent[rootX] = rootY;
+			this.parent[rootX] = rootY
 		} else if (this.rank[rootX] > this.rank[rootY]) {
-			this.parent[rootY] = rootX;
+			this.parent[rootY] = rootX
 		} else {
-			this.parent[rootY] = rootX;
-			this.rank[rootX]++;
+			this.parent[rootY] = rootX
+			this.rank[rootX]++
 		}
 	}
 
@@ -60,17 +70,17 @@ class UnionFind {
 	 * Get all groups as arrays of indices
 	 */
 	getGroups(): number[][] {
-		const groups = new Map<number, number[]>();
+		const groups = new Map<number, number[]>()
 
 		for (let i = 0; i < this.parent.length; i++) {
-			const root = this.find(i);
+			const root = this.find(i)
 			if (!groups.has(root)) {
-				groups.set(root, []);
+				groups.set(root, [])
 			}
-			groups.get(root)!.push(i);
+			groups.get(root)?.push(i)
 		}
 
-		return Array.from(groups.values());
+		return Array.from(groups.values())
 	}
 }
 
@@ -82,32 +92,32 @@ function normalizeString(str: string): string {
 		.toLowerCase()
 		.trim()
 		.replace(/[^\w\s]/g, "") // Remove special characters
-		.replace(/\s+/g, " "); // Normalize whitespace
+		.replace(/\s+/g, " ") // Normalize whitespace
 }
 
 /**
  * Extract artist names from a track
  */
 function getArtistNames(track: Track): string[] {
-	return track.artists.map((artist) => artist.name);
+	return track.artists.map((artist) => artist.name)
 }
 
 /**
  * Normalize an array of artist names into a Set
  */
 function normalizeArtistSet(artists: string[]): Set<string> {
-	return new Set(artists.map((artist) => normalizeString(artist)));
+	return new Set(artists.map((artist) => normalizeString(artist)))
 }
 
 /**
  * Check if two artist sets are equal (order-independent)
  */
 function areArtistSetsEqual(set1: Set<string>, set2: Set<string>): boolean {
-	if (set1.size !== set2.size) return false;
+	if (set1.size !== set2.size) return false
 	for (const artist of set1) {
-		if (!set2.has(artist)) return false;
+		if (!set2.has(artist)) return false
 	}
-	return true;
+	return true
 }
 
 /**
@@ -115,9 +125,9 @@ function areArtistSetsEqual(set1: Set<string>, set2: Set<string>): boolean {
  */
 function isSubset<T>(subset: Set<T>, superset: Set<T>): boolean {
 	for (const item of subset) {
-		if (!superset.has(item)) return false;
+		if (!superset.has(item)) return false
 	}
-	return true;
+	return true
 }
 
 /**
@@ -129,14 +139,14 @@ function isStringSubset(
 	str2: string,
 	minLength: number,
 ): boolean {
-	const shorter = str1.length <= str2.length ? str1 : str2;
-	const longer = str1.length > str2.length ? str1 : str2;
+	const shorter = str1.length <= str2.length ? str1 : str2
+	const longer = str1.length > str2.length ? str1 : str2
 
 	// Check minimum length requirement
-	if (shorter.length < minLength) return false;
+	if (shorter.length < minLength) return false
 
 	// Check if shorter is contained in longer
-	return longer.includes(shorter);
+	return longer.includes(shorter)
 }
 
 /**
@@ -147,18 +157,18 @@ function isStringSubset(
  */
 function matchesStrictCriteria(track1: Track, track2: Track): boolean {
 	// Check duration (within 2000ms)
-	const durationDiff = Math.abs(track1.duration_ms - track2.duration_ms);
-	if (durationDiff > 2000) return false;
+	const durationDiff = Math.abs(track1.duration_ms - track2.duration_ms)
+	if (durationDiff > 2000) return false
 
 	// Check song name (case insensitive)
-	const name1 = normalizeString(track1.name);
-	const name2 = normalizeString(track2.name);
-	if (name1 !== name2) return false;
+	const name1 = normalizeString(track1.name)
+	const name2 = normalizeString(track2.name)
+	if (name1 !== name2) return false
 
 	// Check artist sets (case insensitive, order independent)
-	const artists1 = normalizeArtistSet(getArtistNames(track1));
-	const artists2 = normalizeArtistSet(getArtistNames(track2));
-	return areArtistSetsEqual(artists1, artists2);
+	const artists1 = normalizeArtistSet(getArtistNames(track1))
+	const artists2 = normalizeArtistSet(getArtistNames(track2))
+	return areArtistSetsEqual(artists1, artists2)
 }
 
 /**
@@ -169,27 +179,27 @@ function matchesStrictCriteria(track1: Track, track2: Track): boolean {
  */
 function matchesFuzzyCriteria(track1: Track, track2: Track): boolean {
 	// Check duration (within 50ms)
-	const durationDiff = Math.abs(track1.duration_ms - track2.duration_ms);
-	if (durationDiff > 50) return false;
+	const durationDiff = Math.abs(track1.duration_ms - track2.duration_ms)
+	if (durationDiff > 50) return false
 
 	// Check song name subset (minimum 3 characters for smaller string)
-	const name1 = normalizeString(track1.name);
-	const name2 = normalizeString(track2.name);
-	if (!isStringSubset(name1, name2, 3)) return false;
+	const name1 = normalizeString(track1.name)
+	const name2 = normalizeString(track2.name)
+	if (!isStringSubset(name1, name2, 3)) return false
 
 	// Check artist subset (non-strict)
-	const artists1 = normalizeArtistSet(getArtistNames(track1));
-	const artists2 = normalizeArtistSet(getArtistNames(track2));
+	const artists1 = normalizeArtistSet(getArtistNames(track1))
+	const artists2 = normalizeArtistSet(getArtistNames(track2))
 
 	// Check if either is a subset of the other
-	return isSubset(artists1, artists2) || isSubset(artists2, artists1);
+	return isSubset(artists1, artists2) || isSubset(artists2, artists1)
 }
 
 /**
  * Get the track object from a CombinedTrack
  */
 function getTrack(combinedTrack: CombinedTrack): Track {
-	return combinedTrack.track;
+	return combinedTrack.track
 }
 
 /**
@@ -198,23 +208,23 @@ function getTrack(combinedTrack: CombinedTrack): Track {
  */
 function getRepresentativeTrack(tracks: CombinedTrack[]): Track {
 	if (tracks.length === 0) {
-		throw new Error("Cannot get representative track from empty group");
+		throw new Error("Cannot get representative track from empty group")
 	}
 
 	// Sort by name length (shorter first), then by popularity (higher first)
 	const sorted = [...tracks].sort((a, b) => {
-		const trackA = getTrack(a);
-		const trackB = getTrack(b);
+		const trackA = getTrack(a)
+		const trackB = getTrack(b)
 
 		// Prefer shorter names
-		const nameLengthDiff = trackA.name.length - trackB.name.length;
-		if (nameLengthDiff !== 0) return nameLengthDiff;
+		const nameLengthDiff = trackA.name.length - trackB.name.length
+		if (nameLengthDiff !== 0) return nameLengthDiff
 
 		// Then prefer higher popularity
-		return (trackB.popularity || 0) - (trackA.popularity || 0);
-	});
+		return (trackB.popularity || 0) - (trackA.popularity || 0)
+	})
 
-	return getTrack(sorted[0]);
+	return getTrack(sorted[0])
 }
 
 /**
@@ -236,70 +246,72 @@ function getRepresentativeTrack(tracks: CombinedTrack[]): Track {
 export function groupSimilarTracks(tracks: CombinedTrack[]): TrackGroup[] {
 	// Filter out tracks without valid track data
 	const validTracks = tracks.filter(
-		(t) => t.track && t.track.id && t.track.name && t.track.duration_ms,
-	);
+		(t) => t.track?.id && t.track.name && t.track.duration_ms,
+	)
 
 	if (validTracks.length === 0) {
-		return [];
+		return []
 	}
 
 	// Initialize Union-Find structure
-	const uf = new UnionFind(validTracks.length);
+	const uf = new UnionFind(validTracks.length)
 
 	// Track which criteria were used for each group
-	const groupStrictMatches = new Map<number, Set<string>>(); // root -> set of "i-j" pairs
-	const groupFuzzyMatches = new Map<number, Set<string>>(); // root -> set of "i-j" pairs
+	const groupStrictMatches = new Map<number, Set<string>>() // root -> set of "i-j" pairs
+	const groupFuzzyMatches = new Map<number, Set<string>>() // root -> set of "i-j" pairs
 
 	// Compare all pairs of tracks
 	for (let i = 0; i < validTracks.length; i++) {
 		for (let j = i + 1; j < validTracks.length; j++) {
-			const track1 = getTrack(validTracks[i]);
-			const track2 = getTrack(validTracks[j]);
+			const track1 = getTrack(validTracks[i])
+			const track2 = getTrack(validTracks[j])
 
 			// Check if already in same group
-			if (uf.find(i) === uf.find(j)) continue;
+			if (uf.find(i) === uf.find(j)) continue
 
-			const pairKey = `${i}-${j}`;
-			let matched = false;
+			const pairKey = `${i}-${j}`
+			let matched = false
 
 			// Try strict match first
 			if (matchesStrictCriteria(track1, track2)) {
-				const root = uf.find(i);
+				const root = uf.find(i)
 				if (!groupStrictMatches.has(root)) {
-					groupStrictMatches.set(root, new Set());
+					groupStrictMatches.set(root, new Set())
 				}
-				groupStrictMatches.get(root)!.add(pairKey);
-				uf.union(i, j);
-				matched = true;
+				groupStrictMatches.get(root)?.add(pairKey)
+				uf.union(i, j)
+				matched = true
 			}
 
 			// Try fuzzy match (even if strict matched, to track all match types)
 			if (matchesFuzzyCriteria(track1, track2)) {
-				const root = uf.find(i);
+				const root = uf.find(i)
 				if (!groupFuzzyMatches.has(root)) {
-					groupFuzzyMatches.set(root, new Set());
+					groupFuzzyMatches.set(root, new Set())
 				}
-				groupFuzzyMatches.get(root)!.add(pairKey);
+				groupFuzzyMatches.get(root)?.add(pairKey)
 				if (!matched) {
-					uf.union(i, j);
+					uf.union(i, j)
 				}
 			}
 		}
 	}
 
 	// Extract groups
-	const indexGroups = uf.getGroups();
+	const indexGroups = uf.getGroups()
 
 	// Convert to TrackGroup objects
 	const trackGroups: TrackGroup[] = indexGroups.map((indices) => {
-		const groupTracks = indices.map((i) => validTracks[i]);
-		const root = uf.find(indices[0]);
+		const groupTracks = indices.map((i) => validTracks[i])
+		const root = uf.find(indices[0])
 
 		const hasStrictMatches =
-			groupStrictMatches.has(root) && groupStrictMatches.get(root)!.size > 0;
+			groupStrictMatches.has(root) &&
+			(groupStrictMatches.get(root)?.size ?? 0) > 0
 		const hasFuzzyMatches =
-			groupFuzzyMatches.has(root) && groupFuzzyMatches.get(root)!.size > 0;
-		const isSingleTrack = groupTracks.length === 1;
+			groupFuzzyMatches.has(root) &&
+			(groupFuzzyMatches.get(root)?.size ?? 0) > 0
+		const isSingleTrack = groupTracks.length === 1
 
 		return {
 			tracks: groupTracks,
@@ -309,37 +321,37 @@ export function groupSimilarTracks(tracks: CombinedTrack[]): TrackGroup[] {
 				hasFuzzyMatches,
 				isSingleTrack,
 			},
-		};
-	});
+		}
+	})
 
-	return trackGroups;
+	return trackGroups
 }
 
 /**
  * Get statistics about the grouped tracks
  */
 export function getGroupingStats(groups: TrackGroup[]) {
-	const totalTracks = groups.reduce((sum, g) => sum + g.tracks.length, 0);
+	const totalTracks = groups.reduce((sum, g) => sum + g.tracks.length, 0)
 	const singleTrackGroups = groups.filter(
 		(g) => g.matchReasons.isSingleTrack,
-	).length;
+	).length
 	const multiTrackGroups = groups.filter(
 		(g) => !g.matchReasons.isSingleTrack,
-	).length;
+	).length
 	const strictOnlyGroups = groups.filter(
 		(g) => g.matchReasons.hasStrictMatches && !g.matchReasons.hasFuzzyMatches,
-	).length;
+	).length
 	const fuzzyOnlyGroups = groups.filter(
 		(g) => !g.matchReasons.hasStrictMatches && g.matchReasons.hasFuzzyMatches,
-	).length;
+	).length
 	const mixedGroups = groups.filter(
 		(g) => g.matchReasons.hasStrictMatches && g.matchReasons.hasFuzzyMatches,
-	).length;
+	).length
 
 	const largestGroup = groups.reduce(
 		(max, g) => (g.tracks.length > max ? g.tracks.length : max),
 		0,
-	);
+	)
 
 	return {
 		totalGroups: groups.length,
@@ -351,5 +363,5 @@ export function getGroupingStats(groups: TrackGroup[]) {
 		mixedGroups,
 		largestGroup,
 		averageGroupSize: totalTracks / groups.length,
-	};
+	}
 }

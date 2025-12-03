@@ -42,10 +42,7 @@ export interface SpotifyData {
 		album: Album
 		tracks: SimplifiedTrack[]
 	}[]
-	artists: {
-		artist: Artist
-		tracks: SimplifiedTrack[]
-	}[]
+	artists: Artist[]
 }
 
 export async function fetchSpotifyData(
