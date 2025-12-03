@@ -328,7 +328,10 @@ export async function fetchSpotifyData(
 					return albums
 				})
 				.catch((error) => {
-					console.error(`Error fetching albums chunk [${chunk.join(", ")}]:`, error)
+					console.error(
+						`Error fetching albums chunk [${chunk.join(", ")}]:`,
+						error,
+					)
 					return []
 				}),
 		)
@@ -377,27 +380,20 @@ export async function fetchSpotifyData(
 			)
 		}
 
-		const allArtistPromises: Promise<{
-			artist: Artist
-			tracks: SimplifiedTrack[]
-		}>[] = []
-
 		const artistChunkPromises = artistIdsChunks.map((chunk) =>
 			queue
 				.add(() => spotify.artists.get(chunk))
-				.then((artists) => {
-					return artists
-				})
 				.catch((error) => {
-					console.error(`Error fetching artists chunk [${chunk.join(", ")}]:`, error)
+					console.error(
+						`Error fetching artists chunk [${chunk.join(", ")}]:`,
+						error,
+					)
 					return []
 				}),
 		)
 
-		await Promise.all(artistChunkPromises)
-		const artists = await Promise.all(allArtistPromises)
-
-		return artists
+		const allArtistChunks = await Promise.all(artistChunkPromises)
+		return allArtistChunks.flat()
 	}
 
 	const artists = await getArtists(Array.from(allArtistIds))
