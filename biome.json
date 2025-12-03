@@ -26,7 +26,12 @@
 				"noUnknownAtRules": "off"
 			},
 			"nursery": {
-				"useSortedClasses": "warn"
+				"useSortedClasses": {
+					"level": "warn",
+					"options": {
+						"functions": ["clsx", "cva", "tw", "tw.*"]
+					}
+				}
 			}
 		},
 		"domains": {
