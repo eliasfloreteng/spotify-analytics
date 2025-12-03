@@ -85,7 +85,12 @@ export async function fetchSpotifyData(
 	}
 
 	const getUser = async () => {
-		return await queue.add(() => spotify.currentUser.profile())
+		return await queue
+			.add(() => spotify.currentUser.profile())
+			.catch((error) => {
+				console.error("Error fetching user profile:", error)
+				throw error
+			})
 	}
 
 	const getSavedTracks = async () => {
@@ -102,7 +107,7 @@ export async function fetchSpotifyData(
 
 		for (
 			let offset = MAX_TRACKS_PER_PAGE;
-			offset <= initialSavedTracks.total;
+			offset < initialSavedTracks.total;
 			offset += MAX_TRACKS_PER_PAGE
 		) {
 			allSavedTracksPromises.push(
@@ -145,7 +150,7 @@ export async function fetchSpotifyData(
 		]
 		for (
 			let offset = MAX_TRACKS_PER_PAGE;
-			offset <= initialPlaylistTracks.total;
+			offset < initialPlaylistTracks.total;
 			offset += MAX_TRACKS_PER_PAGE
 		) {
 			allPlaylistTracksPromises.push(
@@ -196,7 +201,7 @@ export async function fetchSpotifyData(
 
 		for (
 			let offset = MAX_TRACKS_PER_PAGE;
-			offset <= initialPlaylistsPage.total;
+			offset < initialPlaylistsPage.total;
 			offset += MAX_TRACKS_PER_PAGE
 		) {
 			remainingPlaylistPromises.push(
@@ -258,7 +263,7 @@ export async function fetchSpotifyData(
 
 		for (
 			let offset = MAX_TRACKS_PER_PAGE;
-			offset <= totalTracks;
+			offset < totalTracks;
 			offset += MAX_TRACKS_PER_PAGE
 		) {
 			allAlbumTracksPromises.push(
