@@ -17,7 +17,8 @@ export default function Login() {
 					<CardTitle>🎵 Spotfiy Listening Insights</CardTitle>
 					<CardDescription>
 						Welcome! Sign in with your Spotify account to view your personalized
-						listening insights, stats, and music analytics.
+						listening insights, stats, and music analytics. We'll only access
+						your library and playlists. No posting or modifications
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
