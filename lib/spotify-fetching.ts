@@ -178,6 +178,11 @@ export async function fetchSpotifyData(
 	}
 
 	const getUserPlaylistsWithTracks = async () => {
+		const allTrackPromises: Promise<{
+			playlist: SimplifiedPlaylist
+			tracks: PlaylistedTrack<Track>[]
+		}>[] = []
+
 		const initialPlaylistsPage = await queue
 			.add(() =>
 				spotify.currentUser.playlists.playlists(MAX_TRACKS_PER_PAGE, 0),
@@ -187,53 +192,39 @@ export async function fetchSpotifyData(
 				return createEmptyPage<SimplifiedPlaylist>()
 			})
 
-		const allTrackPromises: Promise<{
-			playlist: SimplifiedPlaylist
-			tracks: PlaylistedTrack<Track>[]
-		}>[] = initialPlaylistsPage.items.map((playlist) =>
-			getPlaylistTracks(playlist.id).then((tracks) => ({
-				playlist,
-				tracks,
-			})),
-		)
-
-		const remainingPlaylistPromises: Promise<SimplifiedPlaylist[]>[] = []
+		for (const playlist of initialPlaylistsPage.items) {
+			allTrackPromises.push(
+				getPlaylistTracks(playlist.id).then((tracks) => ({
+					playlist,
+					tracks,
+				})),
+			)
+		}
 
 		for (
 			let offset = MAX_TRACKS_PER_PAGE;
 			offset < initialPlaylistsPage.total;
 			offset += MAX_TRACKS_PER_PAGE
 		) {
-			remainingPlaylistPromises.push(
-				queue
-					.add(() =>
-						spotify.currentUser.playlists.playlists(
-							MAX_TRACKS_PER_PAGE,
-							offset,
-						),
-					)
-					.then((page) => {
-						page.items.forEach((playlist) => {
-							allTrackPromises.push(
-								getPlaylistTracks(playlist.id).then((tracks) => ({
-									playlist,
-									tracks,
-								})),
-							)
-						})
-						return page.items
-					})
-					.catch((error) => {
-						console.error(
-							`Error fetching playlists at offset ${offset}:`,
-							error,
+			queue
+				.add(() =>
+					spotify.currentUser.playlists.playlists(MAX_TRACKS_PER_PAGE, offset),
+				)
+				.then((page) => {
+					for (const playlist of page.items) {
+						allTrackPromises.push(
+							getPlaylistTracks(playlist.id).then((tracks) => ({
+								playlist,
+								tracks,
+							})),
 						)
-						return []
-					}),
-			)
+					}
+				})
+				.catch((error) => {
+					console.error(`Error fetching playlists at offset ${offset}:`, error)
+				})
 		}
 
-		await Promise.all(remainingPlaylistPromises)
 		const playlistsWithTracks = await Promise.all(allTrackPromises)
 
 		return playlistsWithTracks
@@ -245,7 +236,9 @@ export async function fetchSpotifyData(
 		getUserPlaylistsWithTracks(),
 	])
 
-	const savedTrackAlbumIds = savedTracks.map((track) => track.track.album.id)
+	const savedTrackAlbumIds = savedTracks
+		.map((track) => (track.track as Track | null)?.album.id)
+		.filter((id) => id !== undefined)
 	const playlistTrackAlbumIds = playlistsWithTracks.flatMap((playlist) =>
 		playlist.tracks
 			// Track can apparently be null
@@ -291,6 +284,10 @@ export async function fetchSpotifyData(
 	}
 
 	const getAlbumsWithTracks = async (albumIds: string[]) => {
+		if (albumIds.length === 0) {
+			return []
+		}
+
 		const albumIdsChunks: string[][] = []
 		for (
 			let offset = 0;
@@ -307,11 +304,11 @@ export async function fetchSpotifyData(
 			tracks: SimplifiedTrack[]
 		}>[] = []
 
-		const albumChunkPromises = albumIdsChunks.map((chunk) =>
+		for (const chunk of albumIdsChunks) {
 			queue
 				.add(() => spotify.albums.get(chunk))
 				.then((albums) => {
-					albums.forEach((album) => {
+					for (const album of albums) {
 						if (album.total_tracks <= MAX_TRACKS_PER_PAGE) {
 							allAlbumPromises.push(
 								Promise.resolve({
@@ -329,19 +326,16 @@ export async function fetchSpotifyData(
 								),
 							)
 						}
-					})
-					return albums
+					}
 				})
 				.catch((error) => {
 					console.error(
 						`Error fetching albums chunk [${chunk.join(", ")}]:`,
 						error,
 					)
-					return []
-				}),
-		)
+				})
+		}
 
-		await Promise.all(albumChunkPromises)
 		const albumsWithTracks = await Promise.all(allAlbumPromises)
 
 		return albumsWithTracks
@@ -374,6 +368,10 @@ export async function fetchSpotifyData(
 	])
 
 	const getArtists = async (artistIds: string[]) => {
+		if (artistIds.length === 0) {
+			return []
+		}
+
 		const artistIdsChunks: string[][] = []
 		for (
 			let offset = 0;
