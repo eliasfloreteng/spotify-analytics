@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
 	Card,
 	CardContent,
@@ -9,8 +11,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
 import type { PlaylistSongStats } from "@/lib/analytics-data";
 
 interface MostPlaylistedSongsProps {
@@ -42,7 +42,7 @@ export default function MostPlaylistedSongs({
 				</CardHeader>
 				<CardContent>
 					<div className="relative mb-4">
-						<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						<Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
 						<Input
 							placeholder="Search songs..."
 							value={searchQuery}
@@ -61,11 +61,11 @@ export default function MostPlaylistedSongs({
 									href={`https://open.spotify.com/track/${item.track.id}`}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="mb-2 flex items-start justify-between cursor-pointer transition-colors hover:opacity-80"
+									className="mb-2 flex cursor-pointer items-start justify-between transition-colors hover:opacity-80"
 								>
 									<div className="flex-1">
 										<div className="flex items-center gap-2">
-											<span className="text-lg font-bold text-muted-foreground">
+											<span className="font-bold text-lg text-muted-foreground">
 												{index + 1}
 											</span>
 											{item.track.album.images?.[0]?.url && (
@@ -79,15 +79,15 @@ export default function MostPlaylistedSongs({
 												<p className="font-semibold leading-none">
 													{item.track.name}
 												</p>
-												<p className="mt-1 text-sm text-muted-foreground">
+												<p className="mt-1 text-muted-foreground text-sm">
 													{item.track.artists.map((a) => a.name).join(", ")}
 												</p>
 											</div>
 										</div>
 									</div>
 									<div className="text-right">
-										<p className="text-2xl font-bold">{item.playlistCount}</p>
-										<p className="text-xs text-muted-foreground">
+										<p className="font-bold text-2xl">{item.playlistCount}</p>
+										<p className="text-muted-foreground text-xs">
 											{item.playlistCount === 1 ? "playlist" : "playlists"}
 										</p>
 									</div>

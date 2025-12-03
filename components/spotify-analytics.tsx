@@ -1,30 +1,30 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-	RefreshCw,
-	Music,
+	Calendar,
 	Disc3,
 	ListMusic,
-	Calendar,
+	Music,
 	Radio,
+	RefreshCw,
 } from "lucide-react";
-import Dashboard from "@/components/dashboard";
-import TopArtists from "@/components/top-artists";
-import TopAlbums from "@/components/top-albums";
-import MostPlaylistedSongs from "@/components/most-playlisted-songs";
 import AddedOverTimeHeatmap from "@/components/added-over-time-heatmap";
+import Dashboard from "@/components/dashboard";
 import GenresOverTime from "@/components/genres-over-time";
-import type { CombinedTrack, TrackGroup } from "@/lib/song-deduplication";
+import MostPlaylistedSongs from "@/components/most-playlisted-songs";
+import TopAlbums from "@/components/top-albums";
+import TopArtists from "@/components/top-artists";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
-	DashboardStats,
-	ArtistStats,
 	AlbumStats,
+	ArtistStats,
+	DashboardStats,
+	GenreData,
 	PlaylistSongStats,
 	TimelineStats,
 	WeeklyActivityData,
-	GenreData,
 } from "@/lib/analytics-data";
+import type { CombinedTrack, TrackGroup } from "@/lib/song-deduplication";
 
 export default function SpotifyAnalytics({
 	groups,
@@ -52,7 +52,7 @@ export default function SpotifyAnalytics({
 			<div className="container mx-auto px-4 py-8">
 				<div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<div>
-						<h1 className="text-balance text-4xl font-bold tracking-tight">
+						<h1 className="text-balance font-bold text-4xl tracking-tight">
 							Spotify Listening Insights
 						</h1>
 						<p className="mt-2 text-muted-foreground">
@@ -62,7 +62,7 @@ export default function SpotifyAnalytics({
 				</div>
 
 				<Tabs defaultValue="dashboard" className="space-y-6">
-					<TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+					<TabsList className="grid w-full grid-cols-6 lg:inline-grid lg:w-auto">
 						<TabsTrigger value="dashboard" className="gap-2">
 							<RefreshCw className="h-4 w-4" />
 							<span className="hidden sm:inline">Dashboard</span>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Disc3, ListMusic, Music, TrendingUp } from "lucide-react";
 import {
 	Card,
 	CardContent,
@@ -7,7 +8,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Music, Disc3, ListMusic, TrendingUp } from "lucide-react";
 import type { DashboardStats } from "@/lib/analytics-data";
 
 interface DashboardProps {

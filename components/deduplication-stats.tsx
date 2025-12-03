@@ -1,10 +1,9 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Copy, GitMerge, Layers, Music2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { TrackGroup } from "@/lib/song-deduplication";
-import { getGroupingStats } from "@/lib/song-deduplication";
-import { Copy, Music2, GitMerge, Layers } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getGroupingStats, type TrackGroup } from "@/lib/song-deduplication";
 
 interface DeduplicationStatsProps {
 	trackGroups: TrackGroup[];

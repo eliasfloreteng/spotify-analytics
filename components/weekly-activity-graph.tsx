@@ -15,7 +15,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import type { WeeklyActivityData, DayData } from "@/lib/analytics-data";
+import type { DayData, WeeklyActivityData } from "@/lib/analytics-data";
 
 interface WeeklyActivityGraphProps {
 	weeklyActivityData: WeeklyActivityData;

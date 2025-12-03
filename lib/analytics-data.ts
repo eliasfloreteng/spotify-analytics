@@ -1,11 +1,11 @@
 import type { Artist, Track } from "@spotify/web-api-ts-sdk";
-import type { TrackGroup } from "./song-deduplication";
 import {
-	mapTrackGroupsToGenres,
 	calculateGenreStats,
 	calculateGenreTimeline,
 	getTopGenres,
+	mapTrackGroupsToGenres,
 } from "./genre-analysis";
+import type { TrackGroup } from "./song-deduplication";
 
 export interface DashboardStats {
 	uniqueSongs: number;

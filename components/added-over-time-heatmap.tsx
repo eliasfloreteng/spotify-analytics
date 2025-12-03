@@ -1,23 +1,23 @@
 "use client";
 
 import {
+	Bar,
+	BarChart,
+	CartesianGrid,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+	YAxis,
+} from "recharts";
+import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import {
-	ResponsiveContainer,
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	Tooltip,
-	CartesianGrid,
-} from "recharts";
-import type { TimelineStats, WeeklyActivityData } from "@/lib/analytics-data";
 import WeeklyActivityGraph from "@/components/weekly-activity-graph";
+import type { TimelineStats, WeeklyActivityData } from "@/lib/analytics-data";
 
 interface AddedOverTimeHeatmapProps {
 	timelineStats: TimelineStats;
@@ -36,13 +36,13 @@ export default function AddedOverTimeHeatmap({
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
+						<CardTitle className="font-medium text-sm">
 							{"First Track"}
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-lg font-bold">{stats.oldestDate || "N/A"}</div>
-						<p className="text-xs text-muted-foreground">
+						<div className="font-bold text-lg">{stats.oldestDate || "N/A"}</div>
+						<p className="text-muted-foreground text-xs">
 							{"Oldest track in library"}
 						</p>
 					</CardContent>
@@ -50,13 +50,13 @@ export default function AddedOverTimeHeatmap({
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
+						<CardTitle className="font-medium text-sm">
 							{"Latest Track"}
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-lg font-bold">{stats.newestDate || "N/A"}</div>
-						<p className="text-xs text-muted-foreground">
+						<div className="font-bold text-lg">{stats.newestDate || "N/A"}</div>
+						<p className="text-muted-foreground text-xs">
 							{"Most recent addition"}
 						</p>
 					</CardContent>
@@ -64,15 +64,15 @@ export default function AddedOverTimeHeatmap({
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
+						<CardTitle className="font-medium text-sm">
 							{"Average per Month"}
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">
+						<div className="font-bold text-2xl">
 							{stats.avgPerMonth.toLocaleString()}
 						</div>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-muted-foreground text-xs">
 							{`Over ${stats.totalMonths} months`}
 						</p>
 					</CardContent>
@@ -80,13 +80,13 @@ export default function AddedOverTimeHeatmap({
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
+						<CardTitle className="font-medium text-sm">
 							{"Peak Month"}
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-lg font-bold">{stats.peakMonth || "N/A"}</div>
-						<p className="text-xs text-muted-foreground">
+						<div className="font-bold text-lg">{stats.peakMonth || "N/A"}</div>
+						<p className="text-muted-foreground text-xs">
 							{stats.peakCount > 0
 								? `${stats.peakCount} tracks added`
 								: "No data"}

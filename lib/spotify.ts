@@ -1,4 +1,4 @@
-import { SpotifyApi, type AccessToken } from "@spotify/web-api-ts-sdk";
+import { type AccessToken, SpotifyApi } from "@spotify/web-api-ts-sdk";
 import { getIronSession, type SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
 

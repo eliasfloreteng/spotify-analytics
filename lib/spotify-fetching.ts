@@ -1,13 +1,13 @@
 import type {
+	Album,
+	Artist,
 	Page,
+	PlaylistedTrack,
 	SavedTrack,
 	SimplifiedPlaylist,
-	PlaylistedTrack,
-	Track,
-	SpotifyApi,
-	Album,
 	SimplifiedTrack,
-	Artist,
+	SpotifyApi,
+	Track,
 	UserProfile,
 } from "@spotify/web-api-ts-sdk";
 import PQueue from "p-queue";

@@ -1,22 +1,22 @@
 "use client";
 
 import {
+	Bar,
+	BarChart,
+	CartesianGrid,
+	Legend,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+	YAxis,
+} from "recharts";
+import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import {
-	ResponsiveContainer,
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	Tooltip,
-	CartesianGrid,
-	Legend,
-} from "recharts";
 import type { GenreData } from "@/lib/analytics-data";
 
 interface GenresOverTimeProps {
@@ -103,13 +103,13 @@ export default function GenresOverTime({ genreData }: GenresOverTimeProps) {
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
+						<CardTitle className="font-medium text-sm">
 							{"Total Genres"}
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{overallStats.totalGenres}</div>
-						<p className="text-xs text-muted-foreground">
+						<div className="font-bold text-2xl">{overallStats.totalGenres}</div>
+						<p className="text-muted-foreground text-xs">
 							{"Unique genres in library"}
 						</p>
 					</CardContent>
@@ -117,13 +117,13 @@ export default function GenresOverTime({ genreData }: GenresOverTimeProps) {
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">{"Top Genre"}</CardTitle>
+						<CardTitle className="font-medium text-sm">{"Top Genre"}</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-lg font-bold">
+						<div className="font-bold text-lg">
 							{overallStats.topGenre?.genre || "N/A"}
 						</div>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-muted-foreground text-xs">
 							{overallStats.topGenre
 								? `${overallStats.topGenre.trackCount} tracks (${overallStats.topGenre.percentage.toFixed(1)}%)`
 								: "No data"}
@@ -133,15 +133,15 @@ export default function GenresOverTime({ genreData }: GenresOverTimeProps) {
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
+						<CardTitle className="font-medium text-sm">
 							{"Avg Genres/Track"}
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">
+						<div className="font-bold text-2xl">
 							{overallStats.avgGenresPerTrack}
 						</div>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-muted-foreground text-xs">
 							{"Average genres per track"}
 						</p>
 					</CardContent>
@@ -149,15 +149,15 @@ export default function GenresOverTime({ genreData }: GenresOverTimeProps) {
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
+						<CardTitle className="font-medium text-sm">
 							{"Genre Diversity"}
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">
+						<div className="font-bold text-2xl">
 							{topGenres.length >= 5 ? "High" : "Moderate"}
 						</div>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-muted-foreground text-xs">
 							{`Top 10 genres cover ${topGenres
 								.slice(0, 10)
 								.reduce((sum, g) => sum + g.percentage, 0)
@@ -221,14 +221,14 @@ export default function GenresOverTime({ genreData }: GenresOverTimeProps) {
 						{topGenres.slice(0, 15).map((genre, index) => (
 							<div key={genre.genre} className="flex items-center gap-4">
 								<div className="flex w-8 items-center justify-center">
-									<span className="text-sm font-medium text-muted-foreground">
+									<span className="font-medium text-muted-foreground text-sm">
 										{index + 1}
 									</span>
 								</div>
 								<div className="flex-1">
 									<div className="flex items-center justify-between">
 										<span className="font-medium">{genre.genre}</span>
-										<span className="text-sm text-muted-foreground">
+										<span className="text-muted-foreground text-sm">
 											{genre.trackCount} tracks
 										</span>
 									</div>
@@ -242,7 +242,7 @@ export default function GenresOverTime({ genreData }: GenresOverTimeProps) {
 											}}
 										/>
 									</div>
-									<div className="mt-1 flex justify-between text-xs text-muted-foreground">
+									<div className="mt-1 flex justify-between text-muted-foreground text-xs">
 										<span>{genre.percentage.toFixed(1)}% of library</span>
 										<span>{genre.artistCount} artists</span>
 									</div>

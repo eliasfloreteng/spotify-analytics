@@ -1,7 +1,7 @@
 "use client";
 
+import { Disc, Music2, Radio, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music2, Disc, Radio, Sparkles } from "lucide-react";
 
 interface FetchProgress {
 	phase: string;
@@ -71,11 +71,11 @@ export default function LoadingIndicator({
 									className="h-full bg-primary transition-all duration-300 ease-out"
 									style={{ width: `${progress}%` }}
 								>
-									<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+									<div className="absolute inset-0 animate-shimmer bg-linear-to-r from-transparent via-white/20 to-transparent" />
 								</div>
 							</div>
 
-							<p className="text-center text-xs text-muted-foreground">
+							<p className="text-center text-muted-foreground text-xs">
 								{message}
 							</p>
 						</div>

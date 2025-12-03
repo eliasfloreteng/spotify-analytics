@@ -1,17 +1,17 @@
+import SpotifyLogo from "@/components/spotify-logo";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
+	CardDescription,
 	CardHeader,
 	CardTitle,
-	CardDescription,
 } from "@/components/ui/card";
-import SpotifyLogo from "@/components/spotify-logo";
 import { login } from "@/lib/spotify-actions";
 
 export default function Login() {
 	return (
-		<div className="flex flex-col min-h-screen items-center justify-center bg-background">
+		<div className="flex min-h-screen flex-col items-center justify-center bg-background">
 			<Card className="w-full max-w-md shadow-lg">
 				<CardHeader>
 					<CardTitle>🎵 Spotfiy Listening Insights</CardTitle>
@@ -25,7 +25,7 @@ export default function Login() {
 					<Button
 						variant="outline"
 						type="button"
-						className="w-full flex items-center justify-center gap-2"
+						className="flex w-full items-center justify-center gap-2"
 						onClick={login}
 					>
 						<SpotifyLogo className="h-5 w-5" />

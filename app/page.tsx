@@ -1,23 +1,23 @@
-import { logout, refreshTokensIfNeeded } from "@/lib/spotify-actions";
-import { Button } from "@/components/ui/button";
-import { getSpotifyClient } from "@/lib/spotify";
 import { LogOut } from "lucide-react";
 import Login from "@/components/login";
-import { fetchSpotifyData } from "@/lib/spotify-fetching";
+import SpotifyAnalytics from "@/components/spotify-analytics";
+import { Button } from "@/components/ui/button";
+import {
+	calculateAlbumStats,
+	calculateArtistStats,
+	calculateDashboardStats,
+	calculateGenreData,
+	calculatePlaylistStats,
+	calculateTimelineStats,
+	calculateWeeklyActivityData,
+} from "@/lib/analytics-data";
 import {
 	type CombinedTrack,
 	groupSimilarTracks,
 } from "@/lib/song-deduplication";
-import SpotifyAnalytics from "@/components/spotify-analytics";
-import {
-	calculateDashboardStats,
-	calculateArtistStats,
-	calculateAlbumStats,
-	calculatePlaylistStats,
-	calculateTimelineStats,
-	calculateWeeklyActivityData,
-	calculateGenreData,
-} from "@/lib/analytics-data";
+import { getSpotifyClient } from "@/lib/spotify";
+import { logout, refreshTokensIfNeeded } from "@/lib/spotify-actions";
+import { fetchSpotifyData } from "@/lib/spotify-fetching";
 
 export default async function HomePage() {
 	await refreshTokensIfNeeded();
@@ -71,7 +71,7 @@ export default async function HomePage() {
 
 	return (
 		<div>
-			<h1 className="text-2xl font-bold">Hello {user.display_name}</h1>
+			<h1 className="font-bold text-2xl">Hello {user.display_name}</h1>
 			<Button variant="outline" type="button" onClick={logout}>
 				<LogOut className="mr-2 h-4 w-4" />
 				Logout

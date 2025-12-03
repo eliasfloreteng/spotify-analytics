@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { clearSession, getSession, setTokens, SPOTIFY_SCOPES } from "./spotify";
+import { clearSession, getSession, SPOTIFY_SCOPES, setTokens } from "./spotify";
 
 interface SpotifyTokens {
 	access_token: string;

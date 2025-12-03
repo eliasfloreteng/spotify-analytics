@@ -1,6 +1,6 @@
-import type React from "react";
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
+import type React from "react";
 import "./globals.css";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
