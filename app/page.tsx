@@ -1,4 +1,4 @@
-import { logout } from "@/lib/spotify-actions"
+import { logout, refreshTokensIfNeeded } from "@/lib/spotify-actions"
 import { Button } from "@/components/ui/button"
 import { getSpotifyClient } from "@/lib/spotify"
 import { LogOut } from "lucide-react"
@@ -20,6 +20,8 @@ import {
 } from "@/lib/analytics-data"
 
 export default async function HomePage() {
+	await refreshTokensIfNeeded()
+
 	const spotify = await getSpotifyClient()
 	if (!spotify) {
 		return <Login />
