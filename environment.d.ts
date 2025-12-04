@@ -5,6 +5,7 @@ declare global {
 			SPOTIFY_CLIENT_SECRET: string;
 			SPOTIFY_REDIRECT_URI: string;
 			SESSION_SECRET: string;
+			DATABASE_URL: string;
 		}
 	}
 }
