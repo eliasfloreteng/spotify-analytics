@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { refreshTokensIfNeeded } from "./lib/spotify-actions";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
 	// Skip middleware for API routes, auth callback, and static files
 	const path = request.nextUrl.pathname;
 	if (
