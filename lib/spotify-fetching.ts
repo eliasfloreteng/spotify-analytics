@@ -11,6 +11,18 @@ import type {
 	UserProfile,
 } from "@spotify/web-api-ts-sdk";
 import PQueue from "p-queue";
+import {
+	getExistingAlbumIds,
+	getExistingArtistIds,
+	getExistingTrackIds,
+	saveAlbum,
+	saveAlbumTracks,
+	saveArtist,
+	savePlaylist,
+	saveSavedTracks,
+	saveTrack,
+	saveUser,
+} from "./spotify-db";
 
 const MAX_TRACKS_PER_PAGE = 50;
 const MAX_ALBUMS_PER_REQUEST = 20;
@@ -216,164 +228,67 @@ export async function fetchSpotifyData(
 		return playlistsWithTracks;
 	};
 
-	const [user, savedTracks, playlistsWithTracks] = await Promise.all([
-		getUser(),
+	// Step 1: Fetch and save user
+	console.log("Fetching user...");
+	const user = await getUser();
+	await saveUser(user);
+	console.log("User saved to database");
+
+	// Step 2: Fetch saved tracks and playlists
+	console.log("Fetching saved tracks and playlists...");
+	const [savedTracksData, playlistsWithTracksData] = await Promise.all([
 		getSavedTracks(),
 		getUserPlaylistsWithTracks(),
 	]);
 
-	const savedTrackAlbumIds = savedTracks
-		.map((track) => (track.track as Track | null)?.album.id)
-		.filter((id) => id !== undefined);
-	const playlistTrackAlbumIds = playlistsWithTracks.flatMap((playlist) =>
-		playlist.tracks
-			// Track can apparently be null
-			.map((track) => (track.track as Track | null)?.album.id)
-			.filter((id) => id !== undefined),
-	);
-
-	const allAlbumIds = new Set([
-		...savedTrackAlbumIds,
-		...playlistTrackAlbumIds,
-	]);
-
-	const getAdditionalAlbumTracks = async (
-		albumId: string,
-		totalTracks: number,
-	) => {
-		const allAlbumTracksPromises: Promise<Page<SimplifiedTrack>>[] = [];
-
-		for (
-			let offset = MAX_TRACKS_PER_PAGE;
-			offset < totalTracks;
-			offset += MAX_TRACKS_PER_PAGE
-		) {
-			allAlbumTracksPromises.push(
-				queue
-					.add(() =>
-						spotify.albums.tracks(
-							albumId,
-							undefined,
-							MAX_TRACKS_PER_PAGE,
-							offset,
-						),
-					)
-					.catch((error) => {
-						console.error(
-							`Error fetching album ${albumId} tracks at offset ${offset}:`,
-							error,
-						);
-						return createEmptyPage<SimplifiedTrack>();
-					}),
-			);
-		}
-
-		const allAlbumTracks = await Promise.all(allAlbumTracksPromises);
-		return allAlbumTracks.flatMap((page) => page.items);
-	};
-
-	const getAlbumsWithTracks = async (albumIds: string[]) => {
-		if (albumIds.length === 0) {
-			return [];
-		}
-
-		const albumIdsChunks: string[][] = [];
-		for (
-			let offset = 0;
-			offset < albumIds.length;
-			offset += MAX_ALBUMS_PER_REQUEST
-		) {
-			albumIdsChunks.push(
-				albumIds.slice(offset, offset + MAX_ALBUMS_PER_REQUEST),
-			);
-		}
-
-		const allAlbumPromises: Promise<{
-			album: Album;
-			tracks: SimplifiedTrack[];
-		}>[] = [];
-
-		for (const chunk of albumIdsChunks) {
-			queue
-				.add(() => spotify.albums.get(chunk))
-				.then((albums) => {
-					for (const album of albums) {
-						if (album.total_tracks <= MAX_TRACKS_PER_PAGE) {
-							allAlbumPromises.push(
-								Promise.resolve({
-									album,
-									tracks: album.tracks.items,
-								}),
-							);
-						} else {
-							allAlbumPromises.push(
-								getAdditionalAlbumTracks(album.id, album.total_tracks).then(
-									(additionalTracks) => ({
-										album,
-										tracks: [...album.tracks.items, ...additionalTracks],
-									}),
-								),
-							);
-						}
-					}
-				})
-				.catch((error) => {
-					console.error(
-						`Error fetching albums chunk [${chunk.join(", ")}]:`,
-						error,
-					);
-				});
-		}
-
-		const albumsWithTracks = await Promise.all(allAlbumPromises);
-
-		return albumsWithTracks;
-	};
-
-	const albumsWithTracks = await getAlbumsWithTracks(Array.from(allAlbumIds));
-
-	const savedTracksArtistIds = savedTracks
+	// Step 3: Collect all unique artist IDs from tracks
+	console.log("Collecting artist IDs...");
+	const savedTracksArtistIds = savedTracksData
 		.flatMap((track) =>
-			// Track can apparently be null
 			(track.track as Track | null)?.artists.map((artist) => artist.id),
 		)
-		.filter((id) => id !== undefined);
+		.filter((id) => id !== undefined) as string[];
 
-	const playlistTracksArtistIds = playlistsWithTracks.flatMap((playlist) =>
+	const playlistTracksArtistIds = playlistsWithTracksData.flatMap((playlist) =>
 		playlist.tracks
 			.flatMap((track) =>
-				// Track can apparently be null
 				(track.track as Track | null)?.artists.map((artist) => artist.id),
 			)
 			.filter((id) => id !== undefined),
 	);
-	const albumTracksArtistIds = albumsWithTracks.flatMap((album) =>
-		album.tracks.flatMap((track) => track.artists.map((artist) => artist.id)),
+
+	const allArtistIds = Array.from(
+		new Set([...savedTracksArtistIds, ...playlistTracksArtistIds]),
 	);
-	const allArtistIds = new Set([
-		...savedTracksArtistIds,
-		...playlistTracksArtistIds,
-		...albumTracksArtistIds,
-	]);
 
-	const getArtists = async (artistIds: string[]) => {
-		if (artistIds.length === 0) {
-			return [];
-		}
+	// Step 4: Check which artists already exist in DB and fetch missing ones
+	console.log(
+		`Checking existing artists (${allArtistIds.length} unique artists)...`,
+	);
+	const existingArtistIds = await getExistingArtistIds(allArtistIds);
+	const missingArtistIds = allArtistIds.filter(
+		(id) => !existingArtistIds.has(id),
+	);
 
+	console.log(
+		`Found ${existingArtistIds.size} existing, fetching ${missingArtistIds.length} missing artists...`,
+	);
+
+	// Fetch and save missing artists
+	if (missingArtistIds.length > 0) {
 		const artistIdsChunks: string[][] = [];
 		for (
 			let offset = 0;
-			offset < artistIds.length;
+			offset < missingArtistIds.length;
 			offset += MAX_ARTISTS_PER_REQUEST
 		) {
 			artistIdsChunks.push(
-				artistIds.slice(offset, offset + MAX_ARTISTS_PER_REQUEST),
+				missingArtistIds.slice(offset, offset + MAX_ARTISTS_PER_REQUEST),
 			);
 		}
 
-		const artistChunkPromises = artistIdsChunks.map((chunk) =>
-			queue
+		for (const chunk of artistIdsChunks) {
+			const artistsChunk = await queue
 				.add(() => spotify.artists.get(chunk))
 				.catch((error) => {
 					console.error(
@@ -381,22 +296,170 @@ export async function fetchSpotifyData(
 						error,
 					);
 					return [];
-				}),
-		);
+				});
 
-		const allArtistChunks = await Promise.all(artistChunkPromises);
-		return allArtistChunks.flat();
-	};
+			for (const artist of artistsChunk) {
+				await saveArtist(artist);
+			}
+		}
+		console.log(`Saved ${missingArtistIds.length} new artists to database`);
+	}
 
-	const artists = await getArtists(Array.from(allArtistIds));
+	// Step 5: Collect album IDs
+	console.log("Collecting album IDs...");
+	const savedTrackAlbumIds = savedTracksData
+		.map((track) => (track.track as Track | null)?.album.id)
+		.filter((id) => id !== undefined) as string[];
 
-	const data = {
-		user,
-		savedTracks,
-		playlistsWithTracks,
-		albumsWithTracks,
-		artists,
-	};
+	const playlistTrackAlbumIds = playlistsWithTracksData.flatMap((playlist) =>
+		playlist.tracks
+			.map((track) => (track.track as Track | null)?.album.id)
+			.filter((id) => id !== undefined),
+	) as string[];
 
-	return data;
+	const allAlbumIds = Array.from(
+		new Set([...savedTrackAlbumIds, ...playlistTrackAlbumIds]),
+	);
+
+	// Step 6: Check which albums already exist and fetch missing ones
+	console.log(
+		`Checking existing albums (${allAlbumIds.length} unique albums)...`,
+	);
+	const existingAlbumIds = await getExistingAlbumIds(allAlbumIds);
+	const missingAlbumIds = allAlbumIds.filter((id) => !existingAlbumIds.has(id));
+
+	console.log(
+		`Found ${existingAlbumIds.size} existing, fetching ${missingAlbumIds.length} missing albums...`,
+	);
+
+	// Fetch and save missing albums with their tracks
+	if (missingAlbumIds.length > 0) {
+		const albumIdsChunks: string[][] = [];
+		for (
+			let offset = 0;
+			offset < missingAlbumIds.length;
+			offset += MAX_ALBUMS_PER_REQUEST
+		) {
+			albumIdsChunks.push(
+				missingAlbumIds.slice(offset, offset + MAX_ALBUMS_PER_REQUEST),
+			);
+		}
+
+		for (const chunk of albumIdsChunks) {
+			const albumsChunk = await queue
+				.add(() => spotify.albums.get(chunk))
+				.catch((error) => {
+					console.error(
+						`Error fetching albums chunk [${chunk.join(", ")}]:`,
+						error,
+					);
+					return [];
+				});
+
+			for (const album of albumsChunk) {
+				// Save the album first
+				await saveAlbum(album);
+
+				// Fetch additional tracks if album has more than 50 tracks
+				let allAlbumTracks = [...album.tracks.items];
+
+				if (album.total_tracks > MAX_TRACKS_PER_PAGE) {
+					for (
+						let offset = MAX_TRACKS_PER_PAGE;
+						offset < album.total_tracks;
+						offset += MAX_TRACKS_PER_PAGE
+					) {
+						const additionalTracks = await queue
+							.add(() =>
+								spotify.albums.tracks(
+									album.id,
+									undefined,
+									MAX_TRACKS_PER_PAGE,
+									offset,
+								),
+							)
+							.catch((error) => {
+								console.error(
+									`Error fetching album ${album.id} tracks at offset ${offset}:`,
+									error,
+								);
+								return createEmptyPage<SimplifiedTrack>();
+							});
+
+						allAlbumTracks = [...allAlbumTracks, ...additionalTracks.items];
+					}
+				}
+
+				// Save album-track relationships
+				await saveAlbumTracks(album.id, allAlbumTracks);
+			}
+		}
+		console.log(`Saved ${missingAlbumIds.length} new albums to database`);
+	}
+
+	// Step 7: Collect all track IDs and check which exist
+	console.log("Collecting track IDs...");
+	const allTrackIds = Array.from(
+		new Set([
+			...savedTracksData
+				.map((st) => (st.track as Track | null)?.id)
+				.filter((id) => id !== undefined),
+			...playlistsWithTracksData.flatMap((p) =>
+				p.tracks
+					.map((pt) => (pt.track as Track | null)?.id)
+					.filter((id) => id !== undefined),
+			),
+		]),
+	) as string[];
+
+	console.log(
+		`Checking existing tracks (${allTrackIds.length} unique tracks)...`,
+	);
+	const existingTrackIds = await getExistingTrackIds(allTrackIds);
+	const missingTrackIds = allTrackIds.filter((id) => !existingTrackIds.has(id));
+
+	console.log(
+		`Found ${existingTrackIds.size} existing, saving ${missingTrackIds.length} missing tracks...`,
+	);
+
+	// Save missing tracks (we already have them from saved tracks and playlists)
+	const allTracksMap = new Map<string, Track>();
+	for (const st of savedTracksData) {
+		const track = st.track as Track | null;
+		if (track && !allTracksMap.has(track.id)) {
+			allTracksMap.set(track.id, track);
+		}
+	}
+	for (const playlist of playlistsWithTracksData) {
+		for (const pt of playlist.tracks) {
+			const track = pt.track as Track | null;
+			if (track && !allTracksMap.has(track.id)) {
+				allTracksMap.set(track.id, track);
+			}
+		}
+	}
+
+	for (const trackId of missingTrackIds) {
+		const track = allTracksMap.get(trackId);
+		if (track) {
+			await saveTrack(track);
+		}
+	}
+	console.log(`Saved ${missingTrackIds.length} new tracks to database`);
+
+	// Step 8: Save saved tracks relationships
+	console.log("Saving saved tracks relationships...");
+	await saveSavedTracks(user.id, savedTracksData);
+
+	// Step 9: Save playlists and their tracks
+	console.log("Saving playlists...");
+	for (const {
+		playlist,
+		tracks: playlistTracksData,
+	} of playlistsWithTracksData) {
+		await savePlaylist(playlist, user.id, playlistTracksData);
+	}
+	console.log(`Saved ${playlistsWithTracksData.length} playlists to database`);
+
+	console.log("All data saved to database successfully!");
 }

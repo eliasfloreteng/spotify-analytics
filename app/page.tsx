@@ -15,6 +15,7 @@ import {
 } from "@/lib/song-deduplication";
 import { getSpotifyClient } from "@/lib/spotify";
 import { fetchSpotifyData } from "@/lib/spotify-fetching";
+import { getSpotifyDataFromDb } from "@/lib/spotify-queries";
 
 export default async function HomePage() {
 	const spotify = await getSpotifyClient();
@@ -22,13 +23,27 @@ export default async function HomePage() {
 		return <Login />;
 	}
 
-	const { user, savedTracks, playlistsWithTracks, artists } =
+	// Fetch user profile to get user ID
+	const userProfile = await spotify.currentUser.profile();
+
+	// Try to get data from database first
+	let data: Awaited<ReturnType<typeof getSpotifyDataFromDb>>;
+	try {
+		data = await getSpotifyDataFromDb(userProfile.id);
+	} catch {
+		// If data doesn't exist in DB, fetch from Spotify API and populate DB
+		console.log("Data not in database, fetching from Spotify API...");
 		await fetchSpotifyData(spotify, (completed, total) => {
 			const progress = (completed / total) * 100;
 			console.log(
 				`Progress: ${completed}/${total} requests completed ${progress.toFixed(2)}%`,
 			);
 		});
+		// Now get the data from DB
+		data = await getSpotifyDataFromDb(userProfile.id);
+	}
+
+	const { user, savedTracks, playlistsWithTracks, artists } = data;
 	const userPlaylists = playlistsWithTracks.filter(
 		(playlist) =>
 			playlist.playlist.owner.id === user.id || playlist.playlist.collaborative,
